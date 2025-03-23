@@ -1,4 +1,3 @@
-import { use } from 'react';
 import { useLocation } from 'react-router-dom'; 
 import './homepage.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -6,10 +5,8 @@ import Stack from 'react-bootstrap/Stack';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
-import Carousel from 'react-bootstrap/Carousel';
-import { useState, useRef } from 'react';
 import Nav from 'react-bootstrap/Nav';
-
+import { useState } from 'react';
 
 function Navlink(){
     const location = useLocation();

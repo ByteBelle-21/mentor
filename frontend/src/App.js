@@ -1,25 +1,50 @@
-import logo from './logo.svg';
 import './App.css';
 import Homepage from './homepage';
 import Channels from './channels';
 import Navlink from './navlink';
 import Profile from './profile';
-import { useLocation } from 'react-router-dom'; 
-
+import { Navigate } from 'react-router-dom'; 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 function App() {
-  return (
-    <>
-    <Router>
-      <Navlink></Navlink> 
-      <Routes>
-        <Route path="/" element={<Homepage/>}/>
-        <Route path="/channels" element={<Channels/>}/>
-        <Route path="/profile" element={<Profile/>}/>
-      </Routes>
-    </Router>
-    </>
+    window.BASE_URL = 'https://psutar9920-4000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/';
+
+    const [access, setAccess] = useState(true);
+    const [user, setUser] = useState('');
+
+    const authenticate = (hasAccess, currUser)=>{
+        setAccess(hasAccess);
+        setUser(currUser);
+    }
+
+    const removeAuthentication = () =>{
+        setAccess(false);
+        setUser('');
+        sessionStorage.removeItem('session_user');
+    }
+
+    useEffect(()=>{
+        if(user){
+            sessionStorage.setItem('session_user', user);
+        }
+        else{
+            sessionStorage.removeItem('session_user');
+        }
+    });
+
+
+    return (
+        <>
+            <Router>
+            <Navlink></Navlink> 
+            <Routes>
+                <Route path="/" element={<Homepage  giveAccess={authenticate} removeAccess={removeAuthentication}/>}/>
+                <Route path="/channels" element={ access ? <Channels/> : <Navigate to="/"/>}/>
+                <Route path="/profile" element={access ? <Profile/> :<Navigate to="/"/> }/>
+            </Routes>
+            </Router>
+        </>
   );
 }
 

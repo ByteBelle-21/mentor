@@ -6,10 +6,11 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Carousel from 'react-bootstrap/Carousel';
 import { useState, useRef } from 'react';
+import axios from 'axios';
 
 
 
-function Homepage(){
+function Homepage(giveAccess,removeAccess){
 
     const [showModal, setShowModal] = useState(false);
 
@@ -168,7 +169,7 @@ function Homepage(){
                                     <Button className='login-button' onClick={goToPrev}>
                                         Go Back
                                     </Button>
-                                    <Button className='login-button' onClick={closeSignupModal}>
+                                    <Button className='login-button' onClick={handleSignup}>
                                         Sign In
                                     </Button>
                                 </Stack>
