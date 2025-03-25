@@ -99,7 +99,7 @@ function Channels(){
             <div className='small-container'>
                 <Button className='channel-button' onClick={openChannelModal}> <span class="material-symbols-outlined"> add </span>  New Channel</Button>
                 <ListGroup variant="flush" className='channel-list'>
-                    <ListGroup.Item># • All Channels</ListGroup.Item>
+                    <ListGroup.Item> # • All Channels</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Data Structures</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Algorithms</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Operating Systems</ListGroup.Item>
@@ -160,7 +160,7 @@ function Channels(){
             </div>
             <div className='small-container'>
                 <div className='profile-block'>
-                    <img src="../public/Group 303.png" style={{width:'30%'}}></img>
+                    <img src='Group 303.png' style={{width:'30%'}}></img>
                     <p style={{margin:'0'}}>@Bytebelle</p>
                     <p style={{fontWeight:'bold'}}>John Logan Smeith</p>
                     <Stack direction="horizontal" className='info-stack'>

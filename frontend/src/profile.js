@@ -55,21 +55,29 @@ function Profile(){
                 </ListGroup>
                 <hr></hr>
                 <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
-                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with. Personalized recommendations to expand your network.</p>
+                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
                 <ListGroup variant="flush" className='profile-channel-list'>
                     <ListGroup.Item className='channel-item'># • Data Structures</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Algorithms</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Operating Systems</ListGroup.Item>
                     <ListGroup.Item className='channel-item'># • Databases</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Computer Networks</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Artificial Intelligence</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Machine Learning</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Software Engineering</ListGroup.Item>
+                   
                 </ListGroup>
             </div>
             <div className='profile-div'>
-                <img src="Group 301.png" style={{width:'7vw', margin:'1vw'}}></img>
+                <img src="1.png" style={{width:'7vw', margin:'1vw'}}></img>
                 <Button className='edit-profile-btn'> Edit Profile</Button>
+                <Stack direction="horizontal" className='info-stack' style={{marginTop:"2vw"}}>
+                        <Stack className='info-block'> 
+                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
+                            <p>Posts</p>
+                        </Stack>
+                        <Stack className='info-block'>
+                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
+                            <p>Connections</p>
+                        </Stack>
+                       
+                    </Stack>
                 <div className='social-media-block'>
                     <Stack direction='horizontal'>
                         <p style={{fontWeight:'bold', margin:'0'}}># Add Scial Media</p>
@@ -172,6 +180,14 @@ function Profile(){
                                 type="text"
                                 placeholder="First name"
                                 defaultValue="Mark"
+                            />
+                        </Form.Group>
+                        <Form.Group md='4' as={Col}>
+                            <Form.Label>Experties</Form.Label>
+                            <Form.Control  
+                                type="text"
+                                placeholder="First name"
+                                defaultValue="Beginner"
                             />
                         </Form.Group>
                     </Row>     

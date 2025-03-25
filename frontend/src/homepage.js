@@ -138,11 +138,7 @@ function Homepage(giveAccess,removeAccess){
                                     </Button>
                                 </Stack>
                                 <br></br>
-                                <p>Already have an Account?  
-                                    <span className='go-to-signin' onClick={goToLogIn}>
-                                     Log In
-                                    </span>
-                                </p>   
+                                <p>Already have an Account ? <span className='go-to-signin' onClick={goToLogIn}>Log In</span></p>  
                             </Form>
                         </Carousel.Item>
                         <Carousel.Item>
@@ -174,11 +170,7 @@ function Homepage(giveAccess,removeAccess){
                                     </Button>
                                 </Stack>
                                 <br></br>
-                                <p>Already have an Account ?  
-                                    <span className='go-to-signin' onClick={goToLogIn}>
-                                         Log In
-                                    </span>
-                                </p> 
+                                <p>Already have an Account ? <span className='go-to-signin' onClick={goToLogIn}>Log In</span></p> 
                             </Form>
                         </Carousel.Item>
                     </Carousel>    

@@ -14,6 +14,8 @@ app.use(bodyParser.json());
 
 
 
+
+
 /************************************************************************************************************************************
                                         Functionality Related to the Database and Tables Creation 
 
@@ -163,6 +165,8 @@ db.getConnection((err,connection)=>{
 
 
 
+
+
 /************************************************************************************************************************************
                                         Functionality Related to homepage 
 
@@ -235,6 +239,8 @@ app.post('/login', (request,response)=>{
         response.status(200).send("Successfully Logged in");
     })    
 })
+
+
 
 
 
@@ -338,6 +344,7 @@ app.get('/getAllMessages',(request,response)=>{
 })
 
 
+// Add new message
 app.post('/addMessage',(request, response)=>{
     db.query(`INSERT INTO messageTable(
         senderId,
@@ -517,6 +524,10 @@ app.get('/searchPerson',(request, response)=>{
 })
 
 
+
+
+
+
 /************************************************************************************************************************************
                                         Functionality Related to profile page
 
@@ -594,22 +605,6 @@ app.post('/removeMedia',(request, response)=>{
                 response.status(200).send("Successfully deleted media");
             })
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
