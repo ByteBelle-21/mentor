@@ -481,6 +481,41 @@ function afterPostUpload(user,channel){
 }
 
 
+app.get('/searchChannel',(request, response)=>{
+    db.query(` SELECT * FROM channelTable WHERE name LIKE ?`,
+            [ `%${request.body.channel}%`],(error, result)=>{
+                if(error){
+                    response.status(500).send("Server error during searching channel");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+app.get('/searchPost',(request, response)=>{
+    db.query(` SELECT * FROM postTable WHERE topic LIKE ? OR data LIKE ?`,
+            [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
+                if(error){
+                    response.status(500).send("Server error during searching post");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+app.get('/searchPerson',(request, response)=>{
+    db.query(` SELECT * FROM userTable WHERE name LIKE ? OR username LIKE ?`,
+            [`%${request.body.person}%`, `%${request.body.person}%`],(error, result)=>{
+                if(error){
+                    response.status(500).send("Server error during searching people");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
 
 
 
