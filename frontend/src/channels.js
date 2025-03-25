@@ -160,7 +160,7 @@ function Channels(){
             </div>
             <div className='small-container'>
                 <div className='profile-block'>
-                    <img src="Group 301.png" style={{width:'30%'}}></img>
+                    <img src="../public/Group 303.png" style={{width:'30%'}}></img>
                     <p style={{margin:'0'}}>@Bytebelle</p>
                     <p style={{fontWeight:'bold'}}>John Logan Smeith</p>
                     <Stack direction="horizontal" className='info-stack'>
@@ -183,7 +183,7 @@ function Channels(){
                     <ListGroup variant="flush" >
                         <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
                         <ListGroup.Item className='message-item'>
-                            <img src="Group 301.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
+                            <img src="Group-301.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>hsdgf hefefg<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
                             <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
                         </ListGroup.Item>

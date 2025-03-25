@@ -517,19 +517,83 @@ app.get('/searchPerson',(request, response)=>{
 })
 
 
+/************************************************************************************************************************************
+                                        Functionality Related to profile page
+
+************************************************************************************************************************************/
+
+app.get('/activeUsers', (request, response)=>{
+    db.query(`SELECT * from userTable WHERE id!=? ORDER BY totalPosts DESC LIMIT 5`,
+            [ request.body.currUser],(error, result)=>{
+                if(error){
+                    response.status(500).send("Server error during retriving active users");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
 
 
+app.get('/activeChannels', (request, response)=>{
+    db.query(`SELECT * from channelTable ORDER BY totalPosts DESC LIMIT 7`,(error, result)=>{
+        if(error){
+            response.status(500).send("Server error during retriving active chahnels");
+            return;
+        }    
+        response.status(200).json(result);
+    })
+})
+
+app.post('/saveChanges',(request, response)=>{
+    db.query(`UPDATE userTable 
+              SET 
+              name= ?, username=?, skills=?,avatar=?, profession=?
+              WHERE userId=?`,
+            [ request.body.name,
+              request.body.username,
+              request.body.skills,
+              request.body.avatar,
+              request.body.profession,
+              request.body.id,
+            ],error=>{
+                if(error){
+                    response.status(500).send("Server error during saving changes for profile");
+                    return;
+                }
+                response.status(200).send("Successfully saved changes for profile");
+            })
+})
 
 
+app.post('/addMedia',(request, response)=>{
+    db.query(`INSERT INTO mediaTable(
+              userId,
+              type,
+              link
+            ) VALUES (?,?,?)`,
+            [ request.body.userId,
+              request.body.type,
+              request.body.link,
+            ],error=>{
+                if(error){
+                    response.status(500).send("Server error during adding new media");
+                    return;
+                }
+                response.status(200).send("Successfully added new media");
+            })
+})
 
 
-
-
-
-
-
-
-
+app.post('/removeMedia',(request, response)=>{
+    db.query(`DELETE FROM mediaTable WHERE userId=? AND id=?`,
+            [ request.body.userId, request.body.mediaId ],error=>{
+                if(error){
+                    response.status(500).send("Server error during deleting media");
+                    return;
+                }
+                response.status(200).send("Successfully deleted media");
+            })
+})
 
 
 
