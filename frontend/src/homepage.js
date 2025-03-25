@@ -169,7 +169,7 @@ function Homepage(giveAccess,removeAccess){
                                     <Button className='login-button' onClick={goToPrev}>
                                         Go Back
                                     </Button>
-                                    <Button className='login-button' onClick={handleSignup}>
+                                    <Button className='login-button' onClick={closeSignupModal}>
                                         Sign In
                                     </Button>
                                 </Stack>

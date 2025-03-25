@@ -94,7 +94,8 @@ db.getConnection((err,connection)=>{
 
     connection.query(`CREATE TABLE IF NOT EXISTS channelTable
                     ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      name VARCHAR(100) NOT NULL
+                      name VARCHAR(100) NOT NULL,
+                      totalPosts INT
                     )`,error=>{
                         if(error){
                             console.log("Error occured while creating channel table : ", error);
@@ -335,6 +336,184 @@ app.get('/getAllMessages',(request,response)=>{
                 })
             })
 })
+
+
+app.post('/addMessage',(request, response)=>{
+    db.query(`INSERT INTO messageTable(
+        senderId,
+        receiverId,
+        message,
+        datetime,
+        )
+        VALUES (?,?,?,?)`,
+      [ request.body.senderId,
+        request.body.receiverId,
+        request.body.message,
+        request.body.datetime,
+      ],
+      error=>{
+          if(error){
+              response.status(500).send("Server error while adding new message");
+              return;
+          }
+          afterMsgUpload(request.body.senderId, request.body.receiverId);
+          response.status(200).send("New message added successfully!");
+      })
+})
+
+
+function afterMsgUpload(sender, receiver){
+    db.query(`SELECT * FROM messageTable 
+              WHERE (senderId=? AND receiverId=?)
+              OR
+              (senderId=? AND receiverId=?)`,
+            [ sender, receiver, receiver,sender],
+            (error, result)=>{
+                if(error){
+                    response.status(500).send("Server error while checking whether new connection or not");
+                    return;
+                } 
+                if(result.length == 0){
+                    db.query(` UPDATE userTable SET connections = IFNULL(connections, 0) + 1 WHERE id = ? OR id =?`,[sender, receiver],error=>{
+                        if(error){
+                            console.error("Server error during updating connections in userTable");
+                            return;
+                        }
+                        console.log("Successfully updated connections in userTable");
+                    });
+                }
+            })
+}
+
+
+app.post('/addPost',(request, response)=>{
+    let parentLevel = -1;
+    if(request.body.replyTo != 0){
+        db.query(`SELECT level FROM postTable WHERE id =?`,[request.body.replyTo],(error, levelResult)=>{
+            if(error){
+                response.status(500).send("Server error during retriving parent post level while adding new post");
+                return;
+            }
+            parentLevel = levelResult[0].level;
+        })
+    }
+    db.query(`INSERT INTO postTable(
+              userId,
+              channelId,
+              replyTo,
+              topic,
+              data,
+              datetime,
+              level
+              )
+              VALUES (?,?,?,?,?,?,?)`,
+            [ request.body.userId,
+              request.body.channelId,
+              request.body.replyTo,
+              request.body.topic,
+              request.body.data,
+              request.body.datetime,
+              (parentLevel + 1)
+            ], 
+            error=>{
+                if(error){
+                    response.status(500).send("Server error while adding new post");
+                    return;
+                }
+                afterPostUpload( request.body.userId, request.body.channelId);
+                response.status(200).send("New post added successfully!");
+            })
+})
+
+app.post('/uploadFiles',(request, response)=>{
+    const filePromise = request.body.files.map((file)=>{
+        return new Promise((resolve,reject)=>{
+            db.query(`INSERT INTO fileTable(
+                      postId,
+                      messageId,
+                      fileName,
+                      fileType,
+                      file
+                    ),VALUES(?,?,?,?,?)`,
+                    [
+                      request.body.postId,
+                      request.body.messageId,
+                      file.fileName,
+                      file.fileType,
+                      file.file
+                    ],
+                    (error,result)=>{
+                        if(error){
+                            reject(error);
+                        }
+                        else{
+                            resolve(result);
+                        }
+                    })
+        })
+    })
+
+    Promise.all(filePromise).then(()=>{
+        response.status(200).send("New files added successfully!");
+    })
+    .catch(()=>{
+        res.status(500).send('Server error while saving files');
+    })
+    
+})
+
+
+function afterPostUpload(user,channel){
+    db.query(` UPDATE channelTable SET totalPosts = IFNULL(totalposts, 0) + 1 WHERE id = ?`,[channel],error=>{
+        if(error){
+            console.error("Server error during updating total posts in channelTable");
+            return;
+        }
+        console.log("Successfully updated total posts in channelstable");
+    });
+    db.query(` UPDATE userTable SET totalPosts = IFNULL(totalPosts, 0) + 1 WHERE id = ?`,[user],error=>{
+        if(error){
+            console.error("Server error during updating total posts in userTable");
+            return;
+        }
+        console.log("Successfully updated total posts in userTable");
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /************************************************************************************************************************************
