@@ -204,13 +204,13 @@ app.post('/signup', (request,response)=>{
                       totalPosts,
                       connections)
                       VALUES (?,?,?,?,?,?,?,?,?)`,
-                    [ request.body.signupUsername,
-                      request.body.signupEmail,
-                      request.body.signupPassword,
-                      request.body.signupName,
-                      request.body.signupProfession,
-                      request.body.signupSkills,
-                      request.body.signupAvatar,
+                    [ request.body.signUsername,
+                      request.body.signEmail,
+                      request.body.signPassword,
+                      request.body.signName,
+                      request.body.signProfession,
+                      request.body.signSkills,
+                      request.body.signAvatar,
                       0,
                       0
                     ],error=>{
@@ -227,16 +227,17 @@ app.post('/signup', (request,response)=>{
 
 // Log in functionality 
 app.post('/login', (request,response)=>{
-    db.query(`SELECT * FROM userTable WHERE email=? AND username=?`,[request.body.loginEmail,request.body.loginUsername],(error, result)=>{
-        if(error){
-            response.status(500).send("Server error during retriving user info  associated with email for log in");
-            return;
-        }
-        if(result.length == 0){
-            response.status(401).send("Provided email is already not associate with any account");
-            return;
-        }
-        response.status(200).send("Successfully Logged in");
+    db.query(`SELECT * FROM userTable WHERE email=? AND username=? AND password=?`,
+        [request.body.logEmail, request.body.logUsername, request.body.logPassword],(error, result)=>{
+            if(error){
+                response.status(500).send("Server error during retriving user info  associated with email for log in");
+                return;
+            }
+            if(result.length == 0){
+                response.status(401).send("Provided email is already not associate with any account");
+                return;
+            }
+            response.status(200).send("Successfully Logged in");
     })    
 })
 
