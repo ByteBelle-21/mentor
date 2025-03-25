@@ -7,10 +7,13 @@ import Form from 'react-bootstrap/Form';
 import Carousel from 'react-bootstrap/Carousel';
 import { useState, useRef } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 
 
 function Homepage(giveAccess,removeAccess){
+
+    const navigateTo = useNavigate();
 
     const [showModal, setShowModal] = useState(false);
 
@@ -19,6 +22,9 @@ function Homepage(giveAccess,removeAccess){
     }
 
     const closeModal = ()=>{
+        setLogEmail('');
+        setLogPassword('');
+        setLogUsername('');
         setShowModal(false);
     }
 
@@ -30,6 +36,12 @@ function Homepage(giveAccess,removeAccess){
     }
 
     const closeSignupModal = ()=>{
+        setSignEmail('');
+        setSignName('');
+        setSignPassword('');
+        setSignProfession('');
+        setSignSkills('');
+        setSignUsername('');
         setShowSignupModal(false);
     }
 
@@ -54,6 +66,78 @@ function Homepage(giveAccess,removeAccess){
         openSignupModal();
     }
 
+    const[signUsername, setSignUsername] = useState("");
+    const[signName, setSignName] = useState("");
+    const[signEmail, setSignEmail] = useState("");
+    const[signPassword, setSignPassword] = useState("");
+    const[signProfession, setSignProfession] = useState("");
+    const[signSkills, setSignSkills] = useState("");
+
+    const[sign500Error, setSign500Error] = useState(false);
+    const[sign401Error, setSign401Error] = useState(false);
+    const[signError, setSignError] =  useState(false);
+
+    const[logUsername, setLogUsername] = useState("");
+    const[logEmail, setLogEmail] = useState("");
+    const[logPassword, setLogPassword] = useState("");
+ 
+    const[log500Error, setLog500Error] = useState(false);
+    const[log401Error, setLog401Error] = useState(false);
+    const[logError, setLogError] =  useState(false);
+
+    const handleSignUp=async()=>{
+        const skillsArray = signSkills.split(',').map(item => item.trim()).join(',');
+        if(skillsArray.length ==0 || !signUsername || !signEmail || !signPassword || !signName || !signProfession ){
+            setSignError(true);
+            return;
+        }
+        closeSignupModal();
+        const signAvatar = '/Avatars.png'
+        const data = {
+            signUsername, signName, signPassword, signEmail, signProfession, signSkills: skillsArray, signAvatar
+        }
+        try {
+            const response = await axios.post(`${window.BASE_URL}/signup`, data);
+            if (response.status === 200) {  
+                giveAccess(true,signUsername);
+                navigateTo('/channels');
+            }
+            else if(response.status === 401){
+                setSign401Error(true);
+                return;
+            }
+        } catch (error) {
+                setSign500Error(true);
+                console.error("Catched axios error during SignUp: ",error);
+        }
+    }
+
+
+    const handleLogIn=async()=>{
+        if( !logEmail || !logPassword || !logUsername ){
+            setLogError(true);
+            return;
+        }
+        closeModal();
+        const data = {
+            logEmail, logPassword, logUsername
+        }
+        try {
+            const response = await axios.post(`${window.BASE_URL}/login`, data);
+            if (response.status === 200) {  
+                giveAccess(true,logUsername);
+                navigateTo('/channels');
+            } 
+            else if(response.status === 401){
+                setLog401Error(true);
+            }
+        } catch (error) {
+                setLog500Error(true);
+                console.error("Catched axios error during login: ",error);
+        }
+    }
+
+
     return(
         <div>
              <Modal
@@ -67,29 +151,45 @@ function Homepage(giveAccess,removeAccess){
                 <Form className='join-form'>
                 <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
                     <h4 style={{fontWeight:'bold'}}>Welcome Back Friend !</h4>
+                    {log500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
+                    {log401Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Account doesn't exists with given Email</p>: <></>}
+                    {logError ?  <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}>Please fill out all required fields</p>: <></> }
                     <Form.Group className='form-group'>
                         <Form.Label >
                             Email
                         </Form.Label>
-                        <Form.Control style={{borderColor:'red'}}/>
+                        <Form.Control 
+                            type='text'
+                            style={{borderColor:'red'}}
+                            onChange={(e)=>{ setLogEmail(e.target.value)}}
+                            
+                            />
                     </Form.Group>
                     <Form.Group className='form-group'>
                         <Form.Label>
                             Username
                         </Form.Label>
-                        <Form.Control style={{borderColor:'#22b6a2'}}/>
+                        <Form.Control 
+                            type='text'
+                            style={{borderColor:'#22b6a2'}}
+                            onChange={(e)=>{ setLogUsername(e.target.value)}}
+                        />
                     </Form.Group>
                     <Form.Group className='form-group'>
                         <Form.Label>
                             Password
                         </Form.Label>
-                        <Form.Control style={{borderColor:'#ffcc00'}}/>
+                        <Form.Control
+                            type='password' 
+                            style={{borderColor:'#ffcc00'}}
+                            onChange={(e)=>{ setLogPassword(e.target.value)}}
+                        />
                     </Form.Group>
                     <Stack direction='horizontal' gap={4}>
                         <Button className='login-button' onClick={closeModal}>
                             Cancel
                         </Button>
-                        <Button className='login-button' onClick={closeModal}>
+                        <Button className='login-button' onClick={handleLogIn}>
                             Log In
                         </Button>
                     </Stack>
@@ -108,6 +208,9 @@ function Homepage(giveAccess,removeAccess){
                 <span className='signin-modal'>
                     <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
                     <h4 style={{fontWeight:'bold'}}>Welcome to Our Community !</h4>
+                    {sign500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
+                    {sign401Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Account already exists with given Email</p>: <></>}
+                    {signError ?  <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}>Please fill out all required fields</p>: <></> }
                     <Carousel style={{width:'100%'}} interval={600000} ref={carouselRef}>
                         <Carousel.Item>
                             <Form className='join-form'>
@@ -115,19 +218,31 @@ function Homepage(giveAccess,removeAccess){
                                     <Form.Label >
                                         Email
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'red'}}/>
+                                    <Form.Control
+                                        type='email' 
+                                        style={{borderColor:'red'}}
+                                        onChange={(e)=>{ setSignEmail(e.target.value)}}
+                                    />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
                                     <Form.Label>
                                         Username
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'#22b6a2'}}/>
+                                    <Form.Control 
+                                        type='text'
+                                        style={{borderColor:'#22b6a2'}}
+                                        onChange={(e)=>{ setSignUsername(e.target.value)}}
+                                    />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
                                     <Form.Label>
                                         Password
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'#ffcc00'}}/>
+                                    <Form.Control 
+                                        type='password'
+                                        style={{borderColor:'#ffcc00'}}
+                                        onChange={(e)=>{ setSignPassword(e.target.value)}}    
+                                    />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
                                     <Button className='login-button' onClick={closeSignupModal}>
@@ -147,25 +262,37 @@ function Homepage(giveAccess,removeAccess){
                                     <Form.Label >
                                         Full name 
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'red'}}/>
+                                    <Form.Control 
+                                        type='text'
+                                        style={{borderColor:'red'}}
+                                        onChange={(e)=>{ setSignName(e.target.value)}}   
+                                    />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
                                     <Form.Label>
                                         Occupation
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'#22b6a2'}}/>
+                                    <Form.Control 
+                                        type='text'
+                                        style={{borderColor:'#22b6a2'}}
+                                        onChange={(e)=>{ setSignProfession(e.target.value)}}    
+                                    />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
                                     <Form.Label>
                                         Skills
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'#ffcc00'}}/>
+                                    <Form.Control 
+                                        type='text'
+                                        style={{borderColor:'#ffcc00'}}
+                                        onChange={(e)=>{ setSignSkills(e.target.value)}}    
+                                    />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
                                     <Button className='login-button' onClick={goToPrev}>
                                         Go Back
                                     </Button>
-                                    <Button className='login-button' onClick={closeSignupModal}>
+                                    <Button className='login-button' onClick={handleSignUp}>
                                         Sign In
                                     </Button>
                                 </Stack>
