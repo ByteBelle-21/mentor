@@ -8,7 +8,7 @@ import Form from 'react-bootstrap/Form';
 import Nav from 'react-bootstrap/Nav';
 import { useState } from 'react';
 
-function Navlink(){
+function Navlink({removeAccess}){
     const location = useLocation();
     const isLandingPage = location.pathname === "/";
 
@@ -72,7 +72,7 @@ function Navlink(){
                     </Form>
                    
                 </Modal>
-                <Button className='logout-button'>Log Out</Button>
+                <Button className='logout-button' onClick={()=>removeAccess()}>Log Out</Button>
             </Stack>    
             
             :<></>}

@@ -25,7 +25,8 @@ app.use(bodyParser.json());
 var db = mysql.createPool({
     host: 'mysql-image',
     user: 'root',
-    password: 'zxcvbnm'
+    password: 'zxcvbnm',
+    database: 'postForum'
 });
 
 
@@ -55,10 +56,7 @@ db.getConnection((err,connection)=>{
         }
         else{
             console.log("Successfully accessed postForum database");
-        }
-    });
-
-    connection.query(`CREATE TABLE IF NOT EXISTS userTable
+            connection.query(`CREATE TABLE IF NOT EXISTS userTable
                     ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                       username VARCHAR(50) NOT NULL,
                       email VARCHAR(50) NOT NULL,
@@ -77,88 +75,94 @@ db.getConnection((err,connection)=>{
                         else{
                             console.log("Successfully created user table");
                         }
+            });
+
+            connection.query(`CREATE TABLE IF NOT EXISTS mediaTable
+                            ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            userId INT NOT NULL,
+                            type TEXT NOT NULL,
+                            link TEXT NOT NULL
+                            )`,error=>{
+                                if(error){
+                                    console.log("Error occured while creating media table : ", error);
+                                    return;
+                                }
+                                else{
+                                    console.log("Successfully created media table");
+                                }
+            });
+
+            connection.query(`CREATE TABLE IF NOT EXISTS channelTable
+                            ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            name VARCHAR(100) NOT NULL,
+                            totalPosts INT
+                            )`,error=>{
+                                if(error){
+                                    console.log("Error occured while creating channel table : ", error);
+                                    return;
+                                }
+                                else{
+                                    console.log("Successfully created channel table");
+                                }
+            });
+
+            connection.query(`CREATE TABLE IF NOT EXISTS postTable
+                            ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            userId INT NOT NULL,
+                            channelId INT NOT NULL,
+                            replyTo INT NOT NULL,
+                            topic TEXT NOT NULL,
+                            data TEXT NOT NULL,
+                            datetime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                            level INT, 
+                            likes INT,
+                            dislikes INT                  
+                            )`,error=>{
+                                if(error){
+                                    console.log("Error occured while creating post table : ", error);
+                                    return;
+                                }
+                                else{
+                                    console.log("Successfully created post table");
+                                }
+            });
+
+            connection.query(`CREATE TABLE IF NOT EXISTS fileTable
+                            ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            postId INT,
+                            messageId INT,
+                            fileName TEXT NOT NULL,
+                            fileType TEXT NOT NULL,
+                            file LONGBLOB NOT NULL
+                            )`,error=>{
+                                if(error){
+                                    console.log("Error occured while creating file table : ", error);
+                                    return;
+                                }
+                                else{
+                                    console.log("Successfully created file table");
+                                }
+            });
+
+            connection.query(`CREATE TABLE IF NOT EXISTS messageTable
+                            ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            senderId INT NOT NULL,
+                            receiverId INT NOT NULL,
+                            message TEXT NOT NULL,
+                            datetime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+                            )`,error=>{
+                                if(error){
+                                    console.log("Error occured while creating message table : ", error);
+                                    return;
+                                }
+                                else{
+                                    console.log("Successfully created message table");
+                                }
+            });
+        }
     });
 
-    connection.query(`CREATE TABLE IF NOT EXISTS mediaTable
-                    ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      userId INT NOT NULL,
-                      type TEXT NOT NULL,
-                      link TEXT NOT NULL
-                    )`,error=>{
-                        if(error){
-                            console.log("Error occured while creating media table : ", error);
-                            return;
-                        }
-                        else{
-                            console.log("Successfully created media table");
-                        }
-    });
-
-    connection.query(`CREATE TABLE IF NOT EXISTS channelTable
-                    ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      name VARCHAR(100) NOT NULL,
-                      totalPosts INT
-                    )`,error=>{
-                        if(error){
-                            console.log("Error occured while creating channel table : ", error);
-                            return;
-                        }
-                        else{
-                            console.log("Successfully created channel table");
-                        }
-    });
-
-    connection.query(`CREATE TABLE IF NOT EXISTS postTable
-                    ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      userId INT NOT NULL,
-                      channelId INT NOT NULL,
-                      replyTo INT NOT NULL,
-                      topic TEXT NOT NULL,
-                      data TEXT NOT NULL,
-                      datetime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                      level INT
-                    )`,error=>{
-                        if(error){
-                            console.log("Error occured while creating post table : ", error);
-                            return;
-                        }
-                        else{
-                            console.log("Successfully created post table");
-                        }
-    });
-
-    connection.query(`CREATE TABLE IF NOT EXISTS fileTable
-                    ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      postId INT,
-                      messageId INT,
-                      fileName TEXT NOT NULL,
-                      fileType TEXT NOT NULL,
-                      file LONGBLOB NOT NULL,
-                    )`,error=>{
-                        if(error){
-                            console.log("Error occured while creating file table : ", error);
-                            return;
-                        }
-                        else{
-                            console.log("Successfully created file table");
-                        }
-    });
-
-    connection.query(`CREATE TABLE IF NOT EXISTS messageTable
-                    ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                      senderId INT NOT NULL,
-                      receiverId INT NOT NULL,
-                      message TEXT NOT NULL,
-                      datetime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    )`,error=>{
-                        if(error){
-                            console.log("Error occured while creating message table : ", error);
-                            return;
-                        }
-                        else{
-                            console.log("Successfully created message table");
-                        }
-    });
+    
 
 });
 
@@ -175,8 +179,9 @@ db.getConnection((err,connection)=>{
 
 // Sign up functionality 
 app.post('/signup', (request,response)=>{
-    db.query(`SELECT * FROM userTable WHERE email=?`,[request.body.signupEmail],(error, emailResult)=>{
+    db.query(`SELECT * FROM userTable WHERE email=?`,[request.body.signEmail],(error, emailResult)=>{
         if(error){
+            console.error("Error during email query:", error);
             response.status(500).send("Server error during retriving user info  associated with email for sign up");
             return;
         }
@@ -184,7 +189,7 @@ app.post('/signup', (request,response)=>{
             response.status(401).send("Provided email is already associate with other account");
             return;
         }
-        db.query(`SELECT * FROM userTable WHERE username=?`,[request.body.signupUsername],(error, usernameResult)=>{
+        db.query(`SELECT * FROM userTable WHERE username=?`,[request.body.signUsername],(error, usernameResult)=>{
             if(error){
                 response.status(500).send("Server error during retriving user info  associated with username for sign up");
                 return;

@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 function App() {
     window.BASE_URL = 'https://psutar9920-4000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/';
 
-    const [access, setAccess] = useState(true);
+    const [access, setAccess] = useState(false);
     const [user, setUser] = useState('');
 
     const authenticate = (hasAccess, currUser)=>{
@@ -37,9 +37,9 @@ function App() {
     return (
         <>
             <Router>
-            <Navlink></Navlink> 
+            <Navlink removeAccess={removeAuthentication}></Navlink> 
             <Routes>
-                <Route path="/" element={<Homepage  giveAccess={authenticate} removeAccess={removeAuthentication}/>}/>
+                <Route path="/" element={<Homepage  giveAccess={authenticate}/>}/>
                 <Route path="/channels" element={ access ? <Channels/> : <Navigate to="/"/>}/>
                 <Route path="/profile" element={access ? <Profile/> :<Navigate to="/"/> }/>
             </Routes>
