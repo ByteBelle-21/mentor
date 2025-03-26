@@ -83,14 +83,49 @@ function Channels(){
 
 
     const [showChannelModal, setShowChannelModal] = useState(false);
-    
+    const [channelName, setChannelName] = useState('');
+    const [channelError, setChannelError] = useState(false);
+    const [channel401Error, setChannel401Error] = useState(false);
+    const [channel500Error, setChannel500Error] = useState(false);
+
     const openChannelModal =()=>{
         setShowChannelModal(true);
     }
 
     const closeChannelModal = ()=>{
+        closeChannelErrors();
         setShowChannelModal(false);
     }
+
+    const closeChannelErrors= () =>{
+        setChannel401Error(false);
+        setChannel500Error(false);
+        setChannelError(false);
+    }
+
+    const addChannel= async()=>{
+        if(!channelName){
+            setChannelError(true);
+            return;
+        }
+        const data = { channelName };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/addChannel`, data);
+            if (response.status === 200) {
+                setChannelName('');
+                closeChannelModal();
+                getAllChannels();
+                console.log("Successfully added new channel");
+            } 
+            else if(response.status === 401){
+                setChannel401Error(true);
+            }
+        } catch (error) {
+            setChannel500Error(true);
+            console.error("Catched axios error during adding new channel: ",error);
+        }
+    }
+
 
     const [showPostModal, setShowPostModal] = useState(false);
     
@@ -143,18 +178,25 @@ function Channels(){
                         <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
                         Create new Channel
                     </Stack>
+                    {channelError ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Please fill out Channel name field</p>:<></>}
+                    {channel500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
+                    {channel401Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Channel with given name already exists</p>: <></>}
                     <Form.Group className='form-group'>
                         <Form.Label >
                             Channel Name
                         </Form.Label>
-                        <Form.Control style={{borderColor:'red'}}/>
+                        <Form.Control 
+                            type='text'
+                            style={{borderColor:'red'}}
+                            onChange={(e)=>{setChannelName(e.target.value),closeChannelErrors()}}    
+                        />
                     </Form.Group>
                    
                     <Stack direction='horizontal' gap={4}>
                         <Button className='channel-form-button' onClick={closeChannelModal}>
                             Cancel
                         </Button>
-                        <Button className='channel-form-button' onClick={closeChannelModal}>
+                        <Button className='channel-form-button' onClick={addChannel}>
                             Create
                         </Button>
                     </Stack>

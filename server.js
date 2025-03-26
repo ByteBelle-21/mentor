@@ -265,7 +265,7 @@ app.post('/addChannel',(request,response)=>{
             response.status(401).send("Channel with given name already exists");
             return;
         }
-        db.query(`INSERT INTO postForum.channelTable (name) VALUES (?)`,[request.body.name], error =>{
+        db.query(`INSERT INTO postForum.channelTable (name) VALUES (?)`,[request.body.channelName], error =>{
             if(error){
                 response.status(500).send("Server error while adding new channel");
                 return;
