@@ -110,8 +110,8 @@ db.getConnection((err,connection)=>{
                             userId INT NOT NULL,
                             channelId INT NOT NULL,
                             replyTo INT NOT NULL,
-                            topic TEXT NOT NULL,
-                            data TEXT NOT NULL,
+                            topic VARCHAR(500) NOT NULL,
+                            data VARCHAR(2000) NOT NULL,
                             datetime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
                             level INT, 
                             likes INT,
@@ -417,20 +417,19 @@ app.post('/addPost',(request, response)=>{
               replyTo,
               topic,
               data,
-              datetime,
               level
               )
-              VALUES (?,?,?,?,?,?,?)`,
+              VALUES (?,?,?,?,?,?)`,
             [ request.body.userId,
               request.body.channelId,
               request.body.replyTo,
               request.body.topic,
               request.body.data,
-              request.body.datetime,
               (parentLevel + 1)
             ], 
             error=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error while adding new post");
                     return;
                 }

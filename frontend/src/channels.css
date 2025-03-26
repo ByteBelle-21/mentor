@@ -150,6 +150,7 @@
     font-weight: bold;
 }
 
+
 .new-post-button:hover{
     background-color: transparent;
     border-color: #fc0380;
@@ -171,6 +172,17 @@
     font-size: small;
     font-weight: bold;
     margin: 0;
+}
+
+.file-group{
+    display:flex;
+    flex-direction: row;
+    align-items:center;
+}
+
+.file-popover{
+    width:15vw;
+    padding:0.5vw;
 }
 
 .view-profile-button:hover{

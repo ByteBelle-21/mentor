@@ -16,6 +16,9 @@ import Tooltip from 'react-bootstrap/Tooltip';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Picker from '@emoji-mart/react';
+import Popover from 'react-bootstrap/Popover';
+import Badge from 'react-bootstrap/Badge';
 
 function Channels(){
 
@@ -131,14 +134,110 @@ function Channels(){
 
 
     const [showPostModal, setShowPostModal] = useState(false);
+    const [showTopicEmoji, setShowTopicEmoji] = useState(false);
+    const [showPostEmoji, setShowPostEmoji] = useState(false);
+    const [showFilePopover, setShowFilePopover] = useState(false);
+    const [post500Error, setPost500Error] = useState(false);
+    const [postError, setPostError] = useState(false);
+    const topicEmojiTarget = useRef(null);
+    const topicTextAreaRef = useRef(null);
+    const postEmojiTarget = useRef(null);
+    const dataTextAreaRef = useRef(null);
+    const fileTarget = useRef(null);
+    const [topic, setTopic] = useState('');
+    const [data, setData] = useState('');
+    const [files, setFiles] = useState([]);
+    
+
+    const closePostErrors = () =>{
+        setPostError(false);
+        setPost500Error(false);
+    }
     
     const openPostModal =()=>{
         setShowPostModal(true);
     }
 
     const closePostModal = ()=>{
+        setTopic('');
+        setData('');
+        setFiles([]);
+        setShowPostEmoji(false);
+        setShowTopicEmoji(false);
+        setShowFilePopover(false);
+        closePostErrors();
         setShowPostModal(false);
     }
+
+    const clickTopicEmoji = ()=>{
+        setShowPostEmoji(false);
+        setShowFilePopover(false);
+        setShowTopicEmoji(!showTopicEmoji);
+    }
+
+    const clickPostEmoji = ()=>{
+        setShowTopicEmoji(false);
+        setShowFilePopover(false);
+        setShowPostEmoji(!showPostEmoji);
+    }
+
+    const clickFilePopover = ()=>{
+        setShowTopicEmoji(false);
+        setShowPostEmoji(false);
+        setShowFilePopover(!showFilePopover);
+    }
+
+    const handleTopicEmojiInput =(emoji) =>{
+        const cursor = topicTextAreaRef.current.selectionStart;
+        const newTopic = topic.slice(0,cursor) + emoji.native + topic.slice(cursor);
+        setTopic(newTopic);
+        topicTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
+        topicTextAreaRef.current.focus();
+    }
+
+    const handleDataEmojiInput =(emoji) =>{
+        const cursor = dataTextAreaRef.current.selectionStart;
+        const newData = data.slice(0,cursor) + emoji.native + data.slice(cursor);
+        setData(newData);
+        dataTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
+        dataTextAreaRef.current.focus();
+    }
+
+    const handleFileInput =(event)=>{
+        const files = event.target.files;
+        if (files) {
+           setFiles(prev =>[...prev,...Array.from(files)]);
+        }
+    }
+
+    const handleFileDelete =(fileName) =>{
+        setFiles((prev) => prev.filter((file) => file.name !== fileName));
+    }
+
+
+    const handleNewPost = async() =>{
+        if(!topic || !data ){
+            setPostError(true);
+            return;
+        }
+        const userId = currUserDetails.id;
+        const channelId = 0;
+        const replyTo = 0;
+        const requestData = { userId,channelId, replyTo, topic, data };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/addPost`, requestData);
+            if (response.status === 200) {
+                closePostModal();
+                console.log("Successfully added new post");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during adding new post: ",error);
+        }
+    }
+
 
     const [showProfileCanvas, setShowProfileCanvas] = useState(false);
 
@@ -228,28 +327,85 @@ function Channels(){
                             Create new Post 
                         </Stack>
                         <p>Channel : <span style={{fontWeight:'bold'}}># Channel name </span></p>
+                        {postError ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Please fill out all required field</p>:<></>}
+                        {post500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
                         <Form.Group className='post-form-group'>
                             <Form.Label className='post-form-label'>
                                 Post Topic
-                                <span class="material-symbols-outlined icons ms-auto" >add_reaction</span>
+                                <Nav.Link className='ms-auto' onClick={()=>clickTopicEmoji()} ref={topicEmojiTarget}>
+                                    <span class="material-symbols-outlined icons" >add_reaction</span>
+                                </Nav.Link>
+                                <Overlay target={topicEmojiTarget} show={showTopicEmoji} placement='right'>
+                                    <Popover id="popover-basic">
+                                        <Picker data={data} onEmojiSelect={handleTopicEmojiInput} />
+                                    </Popover>
+                                </Overlay>
                             </Form.Label>
-                            <Form.Control style={{borderColor:'red'}}/>
+                            <Form.Control 
+                                type='text'
+                                ref={topicTextAreaRef}
+                                style={{borderColor:'red'}} 
+                                onChange={(e)=>{setTopic(e.target.value),closePostErrors()}} 
+                                value={topic}
+                            />
                         </Form.Group>
                         <Form.Group className='post-form-group'>
                             <Form.Label className='post-form-label'>
                                 Post Data
-                                <span class="material-symbols-outlined icons ms-auto" >add_reaction</span>
+                                <Nav.Link className='ms-auto' onClick={()=>clickPostEmoji()} ref={postEmojiTarget}>
+                                    <span class="material-symbols-outlined icons" >add_reaction</span>
+                                </Nav.Link>
+                                <Overlay target={postEmojiTarget} show={showPostEmoji} placement='right'>
+                                    <Popover id="popover-basic">
+                                        <Picker data={data} onEmojiSelect={handleDataEmojiInput} />
+                                    </Popover>
+                                </Overlay>
                             </Form.Label>
-                            <Form.Control as="textarea" rows={4} style={{borderColor:'blue'}}/>
+                            <Form.Control 
+                                type='text'
+                                ref={dataTextAreaRef}
+                                as="textarea" 
+                                rows={4} 
+                                style={{borderColor:'blue'}}
+                                onChange={(e)=>{setData(e.target.value), closePostErrors()}}
+                                value={data}
+                            />
                         </Form.Group>
-                        <Form.Group className='post-form-group'>
-                            <Form.Control type="file" multiple style={{borderColor:'#dedb85'}} />
+                        <Form.Group className='post-form-group file-group'>
+                            <Form.Control 
+                                type="file" 
+                                multiple 
+                                style={{borderColor:'#dedb85', marginRight:'0.5vw'}} 
+                                onChange={handleFileInput}
+                            />
+                            <Nav.Link onClick={()=>{ if(files.length > 0) clickFilePopover();}} ref={fileTarget}>
+                                <Badge pill bg="success">
+                                    <h6 style={{margin:'0', padding:'0', fontWeight:'bold'}}>{files.length}</h6>
+                                </Badge>
+                            </Nav.Link>
+                            <Overlay target={fileTarget} show={showFilePopover} placement='right'>
+                                <Popover id="popover-basic"> 
+                                    <ListGroup as="ol" numbered>
+                                        {files.length > 0 && files.map((file)=>(
+                                            <ListGroup.Item
+                                            as="li"
+                                            className="d-flex justify-content-between align-items-start"
+                                            >                                        
+                                                <div className="fw-bold">{file.name}</div>                                
+                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name)} >
+                                                    <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
+                                                </Nav.Link>
+                                            </ListGroup.Item>
+                                        ))}       
+                                    </ListGroup>
+                                </Popover>
+                            </Overlay>
                         </Form.Group>
                         <Stack direction='horizontal' gap={4}>
                             <Button className='channel-form-button' onClick={closePostModal}>
                                 Cancel
                             </Button>
-                            <Button className='channel-form-button' onClick={closePostModal}>
+                            <Button className='channel-form-button' onClick={handleNewPost}>
                                 Create
                             </Button>
                         </Stack>
