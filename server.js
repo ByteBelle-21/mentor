@@ -290,6 +290,7 @@ app.get('/getAllChannels',(request,response)=>{
 
 // Retrive connected users
 app.get('/getConnectedUsers',(request,response)=>{
+    const user = request.query.userId;
     db.query(`SELECT DISTINCT
               CASE WHEN m.senderId=? THEN u_receiver.username
                    WHEN m.receiverId=? THEN u_sender.username
@@ -303,9 +304,10 @@ app.get('/getConnectedUsers',(request,response)=>{
               FROM postForum.messageTable as m
               JOIN postForum.userTable u_receiver ON m.receiverId = u_receiver.id
               JOIN postForum.userTable u_sender ON m.senderId = u_sender.id
-              `,[request.body.userId,request.body.userId,request.body.userId,request.body.userId]
+              `,[user,user,user,user,user,user]
             ,(error, result)=>{
             if(error){
+                console.log(error);
                 response.status(500).send("Server error during retriving all connected users");
                 return;
             }

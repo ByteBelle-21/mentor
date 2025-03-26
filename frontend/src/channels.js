@@ -21,6 +21,7 @@ function Channels(){
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
+        getAllConnections();
     },[]);
 
 
@@ -59,6 +60,23 @@ function Channels(){
             }
         } catch (error) {
             console.error("Catched axios error during retriving all channels details: ",error);
+        }
+    }
+
+
+    const [connections, setConnections] =  useState([]);
+    const getAllConnections = async() =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUserDetails.id}});
+            if (response.status === 200) {
+                setConnections(response.data);
+                console.log("Successfully retrieved all connections");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all connections: ",error);
         }
     }
 
@@ -224,11 +242,13 @@ function Channels(){
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
                         <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
-                        <ListGroup.Item className='message-item'>
-                            <img src="Group301.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:'0'}}>hsdgf hefefg<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
-                            <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
-                        </ListGroup.Item>
+                        {connections.length > 0 && connections.map((user)=>(
+                             <ListGroup.Item className='message-item'>
+                                <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
+                                <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
+                                <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
+                            </ListGroup.Item>
+                        ))}
                     </ListGroup>
                     <Offcanvas show={showProfileCanvas} onHide={closeProfileCanvas} placement='end'>
                         <Offcanvas.Header >
