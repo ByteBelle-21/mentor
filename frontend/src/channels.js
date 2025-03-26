@@ -14,9 +14,12 @@ import TextareaAutosize from 'react-textarea-autosize';
 import Overlay from 'react-bootstrap/Overlay';
 import Tooltip from 'react-bootstrap/Tooltip';
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Channels(){
+
+    const navigateTo = useNavigate();
 
     useEffect(()=>{
         getCurrUserDertails();
@@ -277,7 +280,7 @@ function Channels(){
                                 <p>Experties</p>
                             </Stack>
                         </Stack>
-                        <Button className='profile-button'>View Profile</Button>
+                        <Button className='profile-button' onClick={()=> navigateTo('/profile')}>View Profile</Button>
                     </div> 
                     :<></>
                 }
