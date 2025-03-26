@@ -7,7 +7,7 @@ const app = express();
 
 
 app.use(cors({
-       origin: 'https://psutar9920-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai'
+       origin: '*'
 }));
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
@@ -25,8 +25,7 @@ app.use(bodyParser.json());
 var db = mysql.createPool({
     host: 'mysql-image',
     user: 'root',
-    password: 'zxcvbnm',
-    database: 'postForum'
+    password: 'zxcvbnm'
 });
 
 
@@ -179,7 +178,7 @@ db.getConnection((err,connection)=>{
 
 // Sign up functionality 
 app.post('/signup', (request,response)=>{
-    db.query(`SELECT * FROM userTable WHERE email=?`,[request.body.signEmail],(error, emailResult)=>{
+    db.query(`SELECT * FROM postForum.userTable WHERE email=?`,[request.body.signEmail],(error, emailResult)=>{
         if(error){
             console.error("Error during email query:", error);
             response.status(500).send("Server error during retriving user info  associated with email for sign up");
@@ -189,7 +188,7 @@ app.post('/signup', (request,response)=>{
             response.status(401).send("Provided email is already associate with other account");
             return;
         }
-        db.query(`SELECT * FROM userTable WHERE username=?`,[request.body.signUsername],(error, usernameResult)=>{
+        db.query(`SELECT * FROM postForum.userTable WHERE username=?`,[request.body.signUsername],(error, usernameResult)=>{
             if(error){
                 response.status(500).send("Server error during retriving user info  associated with username for sign up");
                 return;
@@ -198,7 +197,7 @@ app.post('/signup', (request,response)=>{
                 response.status(401).send("Provided username is already associate with other account");
                 return;
             }
-            db.query(`INSERT INTO userTable
+            db.query(`INSERT INTO postForum.userTable
                     ( username,
                       email,
                       password,
@@ -232,7 +231,7 @@ app.post('/signup', (request,response)=>{
 
 // Log in functionality 
 app.post('/login', (request,response)=>{
-    db.query(`SELECT * FROM userTable WHERE email=? AND username=? AND password=?`,
+    db.query(`SELECT * FROM postForum.userTable WHERE email=? AND username=? AND password=?`,
         [request.body.logEmail, request.body.logUsername, request.body.logPassword],(error, result)=>{
             if(error){
                 response.status(500).send("Server error during retriving user info  associated with email for log in");
@@ -257,7 +256,7 @@ app.post('/login', (request,response)=>{
 
 // Add new channe;
 app.post('/addChannel',(request,response)=>{
-    db.query(`SELECT * FROM channelTable WHERE name=?`,[request.body.name],(error, channelResult)=>{
+    db.query(`SELECT * FROM postForum.channelTable WHERE name=?`,[request.body.name],(error, channelResult)=>{
         if(error){
             response.status(500).send("Server error during retrieving channel details while adding new channel");
             return;
@@ -266,7 +265,7 @@ app.post('/addChannel',(request,response)=>{
             response.status(401).send("Channel with given name already exists");
             return;
         }
-        db.query(`INSERT INTO channelTable (name) VALUES (?)`,[request.body.name], error =>{
+        db.query(`INSERT INTO postForum.channelTable (name) VALUES (?)`,[request.body.name], error =>{
             if(error){
                 response.status(500).send("Server error while adding new channel");
                 return;
@@ -279,7 +278,7 @@ app.post('/addChannel',(request,response)=>{
 
 // Retrieve all channel details
 app.get('/getAllChannels',(request,response)=>{
-    db.query(`SELECT * FROM channelTable`,(error, result)=>{
+    db.query(`SELECT * FROM postForum.channelTable`,(error, result)=>{
         if(error){
             response.status(500).send("Server error during retriving all channel's name");
             return;
@@ -301,9 +300,9 @@ app.get('/getConnectedUsers',(request,response)=>{
               CASE WHEN m.senderId=? THEN u_receiver.avatar
                    WHEN m.receiverId=? THEN u_sender.avatar
               END AS avatar
-              FROM messageTable as m
-              JOIN userTable u_receiver ON m.receiverId = u_receiver.id
-              JOIN userTable u_sender ON m.senderId = u_sender.id
+              FROM postForum.messageTable as m
+              JOIN postForum.userTable u_receiver ON m.receiverId = u_receiver.id
+              JOIN postForum.userTable u_sender ON m.senderId = u_sender.id
               `,[request.body.userId,request.body.userId,request.body.userId,request.body.userId]
             ,(error, result)=>{
             if(error){
@@ -317,7 +316,7 @@ app.get('/getConnectedUsers',(request,response)=>{
 
 // Retrive messages between current login user and selected user
 app.get('/getAllMessages',(request,response)=>{
-    db.query(`SELECT * FROM messageTables 
+    db.query(`SELECT * FROM postForum.messageTables 
               WHERE senderId=? AND receiverId=? 
               OR senderId=? AND receiverId=? 
               ORDER BY datetime`,
@@ -329,7 +328,7 @@ app.get('/getAllMessages',(request,response)=>{
                 }
                 const messagesPromise =  messageResult.map(message=>{
                     return new Promise((resolve, reject)=>{
-                        db.query(`SELECT * FROM fileTable WHERE messageId=?`,[message.id],(error, fileResult)=>{
+                        db.query(`SELECT * FROM postForum.fileTable WHERE messageId=?`,[message.id],(error, fileResult)=>{
                             if(error){
                                 reject("Server error during retriving all files related to current message");
                             }
@@ -352,7 +351,7 @@ app.get('/getAllMessages',(request,response)=>{
 
 // Add new message
 app.post('/addMessage',(request, response)=>{
-    db.query(`INSERT INTO messageTable(
+    db.query(`INSERT INTO postForum.messageTable(
         senderId,
         receiverId,
         message,
@@ -376,7 +375,7 @@ app.post('/addMessage',(request, response)=>{
 
 
 function afterMsgUpload(sender, receiver){
-    db.query(`SELECT * FROM messageTable 
+    db.query(`SELECT * FROM postForum.messageTable 
               WHERE (senderId=? AND receiverId=?)
               OR
               (senderId=? AND receiverId=?)`,
@@ -387,12 +386,12 @@ function afterMsgUpload(sender, receiver){
                     return;
                 } 
                 if(result.length == 0){
-                    db.query(` UPDATE userTable SET connections = IFNULL(connections, 0) + 1 WHERE id = ? OR id =?`,[sender, receiver],error=>{
+                    db.query(` UPDATE postForum.userTable SET connections = IFNULL(connections, 0) + 1 WHERE id = ? OR id =?`,[sender, receiver],error=>{
                         if(error){
-                            console.error("Server error during updating connections in userTable");
+                            console.error("Server error during updating connections in postForum.userTable");
                             return;
                         }
-                        console.log("Successfully updated connections in userTable");
+                        console.log("Successfully updated connections in postForum.userTable");
                     });
                 }
             })
@@ -402,7 +401,7 @@ function afterMsgUpload(sender, receiver){
 app.post('/addPost',(request, response)=>{
     let parentLevel = -1;
     if(request.body.replyTo != 0){
-        db.query(`SELECT level FROM postTable WHERE id =?`,[request.body.replyTo],(error, levelResult)=>{
+        db.query(`SELECT level FROM postForum.postTable WHERE id =?`,[request.body.replyTo],(error, levelResult)=>{
             if(error){
                 response.status(500).send("Server error during retriving parent post level while adding new post");
                 return;
@@ -410,7 +409,7 @@ app.post('/addPost',(request, response)=>{
             parentLevel = levelResult[0].level;
         })
     }
-    db.query(`INSERT INTO postTable(
+    db.query(`INSERT INTO postForum.postTable(
               userId,
               channelId,
               replyTo,
@@ -441,7 +440,7 @@ app.post('/addPost',(request, response)=>{
 app.post('/uploadFiles',(request, response)=>{
     const filePromise = request.body.files.map((file)=>{
         return new Promise((resolve,reject)=>{
-            db.query(`INSERT INTO fileTable(
+            db.query(`INSERT INTO postForum.fileTable(
                       postId,
                       messageId,
                       fileName,
@@ -477,25 +476,25 @@ app.post('/uploadFiles',(request, response)=>{
 
 
 function afterPostUpload(user,channel){
-    db.query(` UPDATE channelTable SET totalPosts = IFNULL(totalposts, 0) + 1 WHERE id = ?`,[channel],error=>{
+    db.query(` UPDATE postForum.channelTable SET totalPosts = IFNULL(totalposts, 0) + 1 WHERE id = ?`,[channel],error=>{
         if(error){
-            console.error("Server error during updating total posts in channelTable");
+            console.error("Server error during updating total posts in postForum.channelTable");
             return;
         }
         console.log("Successfully updated total posts in channelstable");
     });
-    db.query(` UPDATE userTable SET totalPosts = IFNULL(totalPosts, 0) + 1 WHERE id = ?`,[user],error=>{
+    db.query(` UPDATE postForum.userTable SET totalPosts = IFNULL(totalPosts, 0) + 1 WHERE id = ?`,[user],error=>{
         if(error){
-            console.error("Server error during updating total posts in userTable");
+            console.error("Server error during updating total posts in postForum.userTable");
             return;
         }
-        console.log("Successfully updated total posts in userTable");
+        console.log("Successfully updated total posts in postForum.userTable");
     });
 }
 
 
 app.get('/searchChannel',(request, response)=>{
-    db.query(` SELECT * FROM channelTable WHERE name LIKE ?`,
+    db.query(` SELECT * FROM postForum.channelTable WHERE name LIKE ?`,
             [ `%${request.body.channel}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching channel");
@@ -507,7 +506,7 @@ app.get('/searchChannel',(request, response)=>{
 
 
 app.get('/searchPost',(request, response)=>{
-    db.query(` SELECT * FROM postTable WHERE topic LIKE ? OR data LIKE ?`,
+    db.query(` SELECT * FROM postForum.postTable WHERE topic LIKE ? OR data LIKE ?`,
             [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching post");
@@ -519,7 +518,7 @@ app.get('/searchPost',(request, response)=>{
 
 
 app.get('/searchPerson',(request, response)=>{
-    db.query(` SELECT * FROM userTable WHERE name LIKE ? OR username LIKE ?`,
+    db.query(` SELECT * FROM postForum.userTable WHERE name LIKE ? OR username LIKE ?`,
             [`%${request.body.person}%`, `%${request.body.person}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching people");
@@ -540,7 +539,7 @@ app.get('/searchPerson',(request, response)=>{
 ************************************************************************************************************************************/
 
 app.get('/activeUsers', (request, response)=>{
-    db.query(`SELECT * from userTable WHERE id!=? ORDER BY totalPosts DESC LIMIT 5`,
+    db.query(`SELECT * from postForum.userTable WHERE id!=? ORDER BY totalPosts DESC LIMIT 5`,
             [ request.body.currUser],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during retriving active users");
@@ -552,7 +551,7 @@ app.get('/activeUsers', (request, response)=>{
 
 
 app.get('/activeChannels', (request, response)=>{
-    db.query(`SELECT * from channelTable ORDER BY totalPosts DESC LIMIT 7`,(error, result)=>{
+    db.query(`SELECT * from postForum.channelTable ORDER BY totalPosts DESC LIMIT 7`,(error, result)=>{
         if(error){
             response.status(500).send("Server error during retriving active chahnels");
             return;
@@ -562,7 +561,7 @@ app.get('/activeChannels', (request, response)=>{
 })
 
 app.post('/saveChanges',(request, response)=>{
-    db.query(`UPDATE userTable 
+    db.query(`UPDATE postForum.userTable 
               SET 
               name= ?, username=?, skills=?,avatar=?, profession=?
               WHERE userId=?`,
@@ -583,7 +582,7 @@ app.post('/saveChanges',(request, response)=>{
 
 
 app.post('/addMedia',(request, response)=>{
-    db.query(`INSERT INTO mediaTable(
+    db.query(`INSERT INTO postForum.mediaTable(
               userId,
               type,
               link
@@ -602,7 +601,7 @@ app.post('/addMedia',(request, response)=>{
 
 
 app.post('/removeMedia',(request, response)=>{
-    db.query(`DELETE FROM mediaTable WHERE userId=? AND id=?`,
+    db.query(`DELETE FROM postForum.mediaTable WHERE userId=? AND id=?`,
             [ request.body.userId, request.body.mediaId ],error=>{
                 if(error){
                     response.status(500).send("Server error during deleting media");
@@ -622,18 +621,18 @@ app.post('/removeMedia',(request, response)=>{
 ************************************************************************************************************************************/
 
 // Get all details associated with given user
-app.get('/getUserDetails',(request,response)=>{
-    db.query(`SELECT * FROM userTable WHERE username=?`,[request.body.username],(error, userResult)=>{
+app.post('/getUserDetails',(request,response)=>{
+    db.query(`SELECT * FROM postForum.userTable WHERE username=?`,[request.body.username],(error, userResult)=>{
         if(error){
             response.status(500).send("Server error during retriving user details");
             return;
         }
-        db.query(`SELECT * FROM mediaTable WHERE userId=?`,[userResult[0].id],(error, mediaResult)=>{
+        db.query(`SELECT * FROM postForum.mediaTable WHERE userId=?`,[userResult[0].id],(error, mediaResult)=>{
             if(error){
                 response.status(500).send("Server error during retriving media info for user details");
                 return;
             }
-            db.query(`SELECT * FROM postTable WHERE userId=?`,[userResult[0].id],(error, postResult)=>{
+            db.query(`SELECT * FROM postForum.postTable WHERE userId=?`,[userResult[0].id],(error, postResult)=>{
                 if(error){
                     response.status(500).send("Server error during retriving media info for user details");
                     return;

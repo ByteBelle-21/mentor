@@ -14,9 +14,35 @@ import Nav from 'react-bootstrap/Nav';
 import TextareaAutosize from 'react-textarea-autosize';
 import Overlay from 'react-bootstrap/Overlay';
 import Tooltip from 'react-bootstrap/Tooltip';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 
 function Channels(){
+
+    useEffect(()=>{
+        getCurrUserDertails();
+    },[]);
+
+    const[currUserDetails, setCurrUserDetails] = useState([]);
+
+    const getCurrUserDertails = async() =>{
+        const username  =  sessionStorage.getItem('session_user');
+        const data = { username };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
+            if (response.status === 200) {
+                setCurrUserDetails(response.data.userInfo);
+                console.log("Successfully retrieved current user details");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving current user details: ",error);
+        }
+    }
+
+
 
     const [showChannelModal, setShowChannelModal] = useState(false);
     
@@ -159,31 +185,34 @@ function Channels(){
                 </div>
             </div>
             <div className='small-container'>
-                <div className='profile-block'>
-                    <img src='Group 303.png' style={{width:'30%'}}></img>
-                    <p style={{margin:'0'}}>@Bytebelle</p>
-                    <p style={{fontWeight:'bold'}}>John Logan Smeith</p>
-                    <Stack direction="horizontal" className='info-stack'>
-                        <Stack className='info-block'> 
-                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
-                            <p>Posts</p>
+                {currUserDetails ? 
+                    <div className='profile-block'>
+                        <img src={currUserDetails.avatar} style={{width:'30%'}}></img>
+                        <p style={{margin:'0'}}>{currUserDetails.username}</p>
+                        <p style={{fontWeight:'bold'}}>{currUserDetails.name}</p>
+                        <Stack direction="horizontal" className='info-stack'>
+                            <Stack className='info-block'> 
+                                <p style={{margin:'0', fontWeight:'bold'}}>{currUserDetails.totalPosts}</p>
+                                <p>Posts</p>
+                            </Stack>
+                            <Stack className='info-block'>
+                                <p style={{margin:'0', fontWeight:'bold'}}>{currUserDetails.connections}</p>
+                                <p>Connections</p>
+                            </Stack>
+                            <Stack className='info-block'>
+                                <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                <p>Experties</p>
+                            </Stack>
                         </Stack>
-                        <Stack className='info-block'>
-                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
-                            <p>Connections</p>
-                        </Stack>
-                        <Stack className='info-block'>
-                            <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
-                            <p>Experties</p>
-                        </Stack>
-                    </Stack>
-                    <Button className='profile-button'>View Profile</Button>
-                </div>
+                        <Button className='profile-button'>View Profile</Button>
+                    </div> 
+                    :<></>
+                }
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
                         <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
                         <ListGroup.Item className='message-item'>
-                            <img src="Group-301.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
+                            <img src="Group301.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>hsdgf hefefg<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
                             <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
                         </ListGroup.Item>
@@ -193,7 +222,7 @@ function Channels(){
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
                         </Offcanvas.Header>
                         <Offcanvas.Body className='profile-canvas-body'>
-                            <img src="Group 301.png" className='canvas-img'></img>
+                            <img src="Group301.png" className='canvas-img'></img>
                             <p style={{fontWeight:'bold', margin:'0'}}>@username</p>
                             <p>usre name here</p>
                             <p>hellp curent! 👋 Nice to meet you.I am profession! Lets connect and share our ideas.</p>
@@ -240,7 +269,7 @@ function Channels(){
                     <Offcanvas show={showMessageCanvas} onHide={closeMessageCanvas} placement='end' style={{width:'30%'}}>
                         <Offcanvas.Header>
                             <Stack direction='horizontal'>
-                                <img src='Group 301.png' style={{width:'12%', marginRight:'0.5vw'}}></img>
+                                <img src='Group301.png' style={{width:'12%', marginRight:'0.5vw'}}></img>
                                 <p style={{margin:0}}>user name here<p style={{margin:0, fontWeight:'bold', fontSize:'small'}}>@username</p></p>
                             </Stack>
                         </Offcanvas.Header>
