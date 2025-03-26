@@ -6,7 +6,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Stack from 'react-bootstrap/Stack';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
-import Carousel from 'react-bootstrap/Carousel';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import Image from 'react-bootstrap/Image';
@@ -21,7 +20,10 @@ function Channels(){
 
     useEffect(()=>{
         getCurrUserDertails();
+        getAllChannels();
     },[]);
+
+
 
     const[currUserDetails, setCurrUserDetails] = useState([]);
 
@@ -39,6 +41,24 @@ function Channels(){
             }
         } catch (error) {
             console.error("Catched axios error during retriving current user details: ",error);
+        }
+    }
+
+
+    const[channels, setChannels] = useState([]);
+
+    const getAllChannels = async() =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/getAllChannels`);
+            if (response.status === 200) {
+                setChannels(response.data);
+                console.log("Successfully retrieved all channels details");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all channels details: ",error);
         }
     }
 
@@ -126,16 +146,9 @@ function Channels(){
                 <Button className='channel-button' onClick={openChannelModal}> <span class="material-symbols-outlined"> add </span>  New Channel</Button>
                 <ListGroup variant="flush" className='channel-list'>
                     <ListGroup.Item> # • All Channels</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Data Structures</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Algorithms</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Operating Systems</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Databases</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Computer Networks</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Artificial Intelligence</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Machine Learning</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Software Engineering</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Cybersecurity</ListGroup.Item>
-                    <ListGroup.Item className='channel-item'># • Theory of Computation</ListGroup.Item>
+                    {channels.length > 0 && channels.map((channel)=>(
+                         <ListGroup.Item className='channel-item'># • {channel.name}</ListGroup.Item>
+                    ))}
                 </ListGroup>
             </div>
             <div className='large-container'>
