@@ -85,21 +85,7 @@ function Channels(){
 
 
 
-    const [popularUsers, setPopularUsers] =  useState([]);
-    const getAllPopularUsers = async() =>{
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/activeUsers`);
-            if (response.status === 200) {
-                setPopularUsers(response.data);
-                console.log("Successfully retrieved all popular users");
-            } 
-            else{
-                console.log(response.message)
-            }
-        } catch (error) {
-            console.error("Catched axios error during retriving all popular users: ",error);
-        }
-    }
+
 
 
     const[currUserDetails, setCurrUserDetails] = useState([]);
@@ -121,7 +107,44 @@ function Channels(){
     }
 
 
-    const [connectedUserDetails, setConnectedUserDetails] =  useState([]);
+    const [popularUsers, setPopularUsers] =  useState([]);
+    const getAllPopularUsers = async() =>{
+        const username  =  sessionStorage.getItem('session_user');
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/activeUsers`, {
+                params:{
+                    currUser : username
+                }
+            });
+            if (response.status === 200) {
+                setPopularUsers(response.data);
+                console.log("Successfully retrieved all popular users",response.data);
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all popular users: ",error);
+        }
+    }
+
+    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
+
+    const openProfileCanvas =()=>{
+        setShowProfileCanvas(true);
+    }
+
+    const closeProfileCanvas = ()=>{
+        setShowProfileCanvas(false);
+    }
+
+    const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
+
+    useEffect(()=>{
+        console.log("connected users details is ", connectedUserDetails.userInfo);
+    },[showProfileCanvas]);
+
+    
     const getConnectedUserDetails = async(user) =>{
         const username  =  user;
         const data = { username };
@@ -129,8 +152,8 @@ function Channels(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setConnectedUserDetails(response.data);
+                console.log("Successfully retrieved connected  user details",connectedUserDetails);
                 openProfileCanvas();
-                console.log("Successfully retrieved connected  user details");
             } 
             else{
                 console.log(response.message)
@@ -140,20 +163,7 @@ function Channels(){
         }
     }
 
-
-    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
-
-    const openProfileCanvas =()=>{
-        closeMessageCanvas();
-        setShowProfileCanvas(true);
-    }
-
-    const closeProfileCanvas = ()=>{
-        setShowProfileCanvas(false);
-    }
-
-
-
+   
 
     const [showChannelModal, setShowChannelModal] = useState(false);
     const [channelName, setChannelName] = useState('');
@@ -393,7 +403,11 @@ function Channels(){
     }
 
 
-   
+    const showPreview =(text, num)=>{
+        const words = text.split(' ');
+        return words.slice(0, num).join(' ')+" . . . . . . . .";
+    }
+
 
     return(
 
@@ -604,7 +618,7 @@ function Channels(){
                                 if(post.level === 0){
                                     postsStructure.push(
                                         <div  className="post-block">
-                                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                            <Stack direction='horizontal' style={{marginBottom:'2vw'}}>
                                                 <img src="1.png" style={{width:'2vw'}}></img>
                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                     <div className="fw-bold">{post.name} </div>
@@ -908,7 +922,7 @@ function Channels(){
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                                 <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getConnectedUserDetails(user.username)}>View Profile</p></p>
-                                <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
+                                <p className='ms-auto view-profile-button' >Message</p>
                             </ListGroup.Item>
                         ))}
                     </ListGroup>
@@ -917,12 +931,12 @@ function Channels(){
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
                         </Offcanvas.Header>
                         <Offcanvas.Body className='profile-canvas-body'>
-                            {connectedUserDetails.length > 0 &&
+                            {connectedUserDetails.userInfo &&
                             <>
                                 <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
                                 <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
                                 <p>{connectedUserDetails.userInfo.name}</p>
-                                <p>hellp {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
+                                <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
                                 <Button className='send-message-button'>Send Message</Button>
                                 <hr style={{width:'90%'}}></hr>
                                 <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
@@ -940,22 +954,33 @@ function Channels(){
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>
-                                <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                                <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
-                                    {connectedUserDetails.media.length >  0 && connectedUserDetails.media.map((account)=>{
-                                        <Nav.Link >
-                                            <Image  src={account.image}  className="social-media-img"  roundedCircle />
-                                        </Nav.Link>
-                                    })}
-                                </Stack>
+                                {connectedUserDetails.media.length >  0 &&
+                                    <>
+                                        <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
+                                        <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
+                                            {connectedUserDetails.media.map((account)=>{
+                                                <Nav.Link >
+                                                    <Image  src={account.image}  className="social-media-img"  roundedCircle />
+                                                </Nav.Link>
+                                                
+                                            })}
+                                        </Stack>
+                                    </>
+                                }
                                 <hr style={{width:'90%'}}></hr>
-                                <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
-                                <ListGroup className='history-list'>
-                                    <ListGroup.Item as="li" className='activity-list-item'>
-                                        <div className="fw-bold" style={{color:'#d84434'}}>channel name here </div>
-                                        <p style={{fontSize:'small'}} >mwjhfgwqhf wkfr kjwbfj fjh .......</p>
-                                    </ListGroup.Item>
-                                </ListGroup>
+                                {connectedUserDetails.post.length >  0 && 
+                                    <>
+                                    <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
+                                    <ListGroup className='history-list'>
+                                        {connectedUserDetails.post.map((post)=>{
+                                            <ListGroup.Item as="li" className='activity-list-item'>
+                                                <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
+>                                                <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
+                                            </ListGroup.Item>
+                                        })}
+                                    </ListGroup>
+                                    </>
+                                }
                             </>
                         }
                         </Offcanvas.Body>

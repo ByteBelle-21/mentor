@@ -631,8 +631,8 @@ app.get('/searchPerson',(request, response)=>{
 ************************************************************************************************************************************/
 
 app.get('/activeUsers', (request, response)=>{
-    db.query(`SELECT * from postForum.userTable WHERE id!=? ORDER BY totalPosts DESC LIMIT 5`,
-            [ request.body.currUser],(error, result)=>{
+    db.query(`SELECT * from postForum.userTable WHERE username !=? ORDER BY totalPosts DESC LIMIT 5`,
+            [ request.query.currUser],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during retriving active users");
                     return;
@@ -724,7 +724,11 @@ app.post('/getUserDetails',(request,response)=>{
                 response.status(500).send("Server error during retriving media info for user details");
                 return;
             }
-            db.query(`SELECT * FROM postForum.postTable WHERE userId=?`,[userResult[0].id],(error, postResult)=>{
+            db.query(`SELECT p.*, c.name AS channel 
+                      FROM postForum.postTable p
+                      JOIN postForum.channelTable c 
+                      ON p.channelId = c.id 
+                      WHERE userId=?`,[userResult[0].id],(error, postResult)=>{
                 if(error){
                     response.status(500).send("Server error during retriving media info for user details");
                     return;
