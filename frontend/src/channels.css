@@ -44,6 +44,10 @@
     padding-top: 1vw;
 }
 
+.channel-posts::-webkit-scrollbar{
+   display: none;
+}
+
 
 .post-block{
     background-color: white;

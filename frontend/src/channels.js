@@ -135,19 +135,44 @@ function Channels(){
 
 
     const [showPostModal, setShowPostModal] = useState(false);
+
+    const topicEmojiTarget = useRef(null);
+    const postEmojiTarget = useRef(null);
+    const replyEmojiTarget = useRef(null);
+    const msgEmojiTarget =  useRef(null);
+
     const [showTopicEmoji, setShowTopicEmoji] = useState(false);
     const [showPostEmoji, setShowPostEmoji] = useState(false);
-    const [showFilePopover, setShowFilePopover] = useState(false);
-    const [post500Error, setPost500Error] = useState(false);
-    const [postError, setPostError] = useState(false);
-    const topicEmojiTarget = useRef(null);
+    const [showReplyEmoji, setShowReplyEmoji] = useState(false);
+    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
+   
     const topicTextAreaRef = useRef(null);
-    const postEmojiTarget = useRef(null);
     const dataTextAreaRef = useRef(null);
-    const fileTarget = useRef(null);
+    const replyTextAreaRef = useRef(null);
+    const msgTextAreaRef = useRef(null);
+  
     const [topic, setTopic] = useState('');
     const [data, setData] = useState('');
+    const [reply, setReply] =  useState('');
+    const [message, setMessage] = useState('');
+
+    const [showFilePopover, setShowFilePopover] = useState(false);
+    const [showFileReplyPopover, setShowFileReplyPopover] =  useState(false);
+    const [showFileMsgPopover, setShowFileMsgPopover] =  useState(false);
+
     const [files, setFiles] = useState([]);
+    const [replyFiles, setReplyFiles] = useState([]);
+    const [msgFiles, setMsgFiles] =  useState([]);
+
+    const replyFilePopoverTarget = useRef(null);
+    const postFilePopoverTarget = useRef(null);
+    const msgFilePopoverTarget = useRef(null);
+
+    const [post500Error, setPost500Error] = useState(false);
+    const [postError, setPostError] = useState(false);
+    
+    const fileReplyRef = useRef(null);
+   
     
 
     const closePostErrors = () =>{
@@ -204,15 +229,53 @@ function Channels(){
         dataTextAreaRef.current.focus();
     }
 
-    const handleFileInput =(event)=>{
+
+    const handleReplyEmojiInput =(emoji) =>{
+        const cursor = replyTextAreaRef.current.selectionStart;
+        const newData = reply.slice(0,cursor) + emoji.native + reply.slice(cursor);
+        setReply(newData);
+        replyTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
+        replyTextAreaRef.current.focus();
+    }
+
+   
+
+    const handleFileInput =(event, isPost, isReply, isMsg)=>{
         const files = event.target.files;
         if (files) {
-           setFiles(prev =>[...prev,...Array.from(files)]);
+            if(isPost){
+                setFiles(prev =>[...prev,...Array.from(files)]);
+            }
+            else if(isReply){
+                setReplyFiles(prev =>[...prev,...Array.from(files)]);
+            }
+            else if(isMsg){
+                setMsgFiles(prev =>[...prev,...Array.from(files)]);
+            }
         }
     }
 
-    const handleFileDelete =(fileName) =>{
-        setFiles((prev) => prev.filter((file) => file.name !== fileName));
+    const handleFileDelete =(fileName, isPost, isReply, isMsg) =>{
+         if (files) {
+            if(isPost){
+                setFiles((prev) => prev.filter((file) => file.name !== fileName));
+                if(files.length === 0){
+                    setShowFilePopover(false);
+                }
+            }
+            else if(isReply){
+               setReplyFiles((prev) => prev.filter((file) => file.name !== fileName));
+                if(replyFiles.length === 0){
+                    setShowFileReplyPopover(false);
+                }
+            }
+            else if(isMsg){
+                setMsgFiles((prev) => prev.filter((file) => file.name !== fileName));
+                if(msgFiles.length === 0){
+                    setShowFileMsgPopover(false);
+                }
+            }
+        }
     }
 
 
@@ -249,6 +312,9 @@ function Channels(){
     }
 
     const closeCommentInput = () =>{
+        setReply('');
+        setReplyFiles([]);
+        setShowFileReplyPopover(false);
         setShowCommentInput(0);
     }
 
@@ -403,14 +469,14 @@ function Channels(){
                                 type="file" 
                                 multiple 
                                 style={{borderColor:'#dedb85', marginRight:'0.5vw'}} 
-                                onChange={handleFileInput}
+                                onChange={(e) => handleFileInput(e, true, false, false)}
                             />
-                            <Nav.Link onClick={()=>{ if(files.length > 0) clickFilePopover();}} ref={fileTarget}>
+                            <Nav.Link onClick={()=>{ if(files.length > 0) clickFilePopover();}} ref={postFilePopoverTarget}>
                                 <Badge pill bg="success">
                                     <h6 style={{margin:'0', padding:'0', fontWeight:'bold'}}>{files.length}</h6>
                                 </Badge>
                             </Nav.Link>
-                            <Overlay target={fileTarget} show={showFilePopover} placement='right'>
+                            <Overlay target={postFilePopoverTarget} show={showFilePopover} placement='right'>
                                 <Popover id="popover-basic"> 
                                     <ListGroup as="ol" numbered>
                                         {files.length > 0 && files.map((file)=>(
@@ -419,7 +485,7 @@ function Channels(){
                                             className="d-flex justify-content-between align-items-start"
                                             >                                        
                                                 <div className="fw-bold">{file.name}</div>                                
-                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name)} >
+                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, true, false, false)} >
                                                     <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
                                                 </Nav.Link>
                                             </ListGroup.Item>
@@ -509,21 +575,66 @@ function Channels(){
                                     </span>
                                 </Nav.Link>
                                 {showCommentInput === 1 && 
-                                    <>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}} className='ms-auto'>
+                                    <>     
+                                        {replyFiles.length > 0 &&
+                                            <Nav.Link 
+                                                className='ms-auto' style={{fontSize:'small', color:'white'}} 
+                                                onClick={()=>setShowFileReplyPopover(!showFileReplyPopover)}
+                                                ref={replyFilePopoverTarget}>
+                                                <Badge bg="warning" text="dark">
+                                                    Attached files {replyFiles.length}
+                                                </Badge>
+                                            </Nav.Link>
+                                        }
+                                        <Overlay target={replyFilePopoverTarget} show={showFileReplyPopover} placement='top'>
+                                            <Popover id="popover-basic"> 
+                                                <ListGroup as="ol" numbered>
+                                                    {replyFiles.length > 0 && replyFiles.map((file)=>(
+                                                        <ListGroup.Item
+                                                        as="li"
+                                                        className="d-flex justify-content-between align-items-start"
+                                                        style={{fontSize:'small'}}
+                                                        >                                        
+                                                            <div className="fw-bold">{file.name}</div>                                
+                                                            <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
+                                                                <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
+                                                            </Nav.Link>
+                                                        </ListGroup.Item>
+                                                    ))}       
+                                                </ListGroup>
+                                            </Popover>
+                                        </Overlay>
+                                        <Nav.Link 
+                                            style={{fontSize:'small', color:'#f86714'}}
+                                            onClick={()=> fileReplyRef.current.click()}
+                                            className={replyFiles.length > 0 ? "" : "ms-auto"}>
                                             <span 
                                                 class="material-symbols-outlined icons" 
                                                 style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                     note_add
                                             </span>
                                         </Nav.Link>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}}>
+                                        <input 
+                                            type='file' 
+                                            style={{ display: 'none' }}
+                                            ref={fileReplyRef}
+                                            onChange={(e)=> handleFileInput(e,false, true, false)}
+                                        />
+                                        <Nav.Link 
+                                            style={{fontSize:'small', color:'#f86714'}} 
+                                            ref={replyEmojiTarget} 
+                                            onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
                                             <span 
                                                 class="material-symbols-outlined icons" 
                                                 style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                     add_reaction
                                             </span>
                                         </Nav.Link>
+                                        <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
+                                            <Popover id="popover-basic">
+                                                <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
+                                            </Popover>
+                                        </Overlay>
                                         <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
                                             Cancel
                                         </Nav.Link>
@@ -538,6 +649,9 @@ function Channels(){
                                     <Form.Control
                                         as="textarea"
                                         style={{ height: '70px' }}
+                                        ref = {replyTextAreaRef}
+                                        onChange={(e)=>setReply(e.target.value)}
+                                        value={reply}
                                     />
                                 </FloatingLabel> 
                             }   
