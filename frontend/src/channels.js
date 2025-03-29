@@ -19,7 +19,7 @@ import axios from 'axios';
 import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';
-import Homepage from './homepage';
+import FloatingLabel from 'react-bootstrap/FloatingLabel';
 
 function Channels(){
 
@@ -242,6 +242,16 @@ function Channels(){
 
     const [channel, setChannel] = useState("Homepage");
 
+    const [showCommentInput, setShowCommentInput] = useState(0);
+
+    const openCommentInput = () =>{
+        setShowCommentInput(1);
+    }
+
+    const closeCommentInput = () =>{
+        setShowCommentInput(0);
+    }
+
 
     const [showProfileCanvas, setShowProfileCanvas] = useState(false);
 
@@ -446,7 +456,7 @@ function Channels(){
                     }
                     
                 </div>
-                {channel === "Homepage" && 
+                {channel !== "Homepage" ? 
                     <div className='homepage-channel'>
                         <span class="material-symbols-outlined icons" style={{fontSize:'2vw', margin:'0', padding:'0', color:'#f86714'}}>groups</span>
                         <h5 style={{fontWeight:'bold'}}>Welcome to AskMentor</h5>
@@ -458,6 +468,151 @@ function Channels(){
                             <li><strong>Send direct messages:</strong> Want to talk privately? Send a direct message.</li>
                         </ul>
                         <p style={{fontWeight:'bold'}}>Start Browsing Now</p>
+                    </div>
+                    :
+                    <div className='channel-posts'>
+                        <div className="post-block">
+                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                <img src="1.png" style={{width:'2vw'}}></img>
+                                <div className="ms-2 me-auto" style={{fontSize:'small'}}>
+                                    <div className="fw-bold">User's name </div>
+                                    Username
+                                </div>
+                                <p className="ms-auto" style={{fontSize:'small'}}> posted on fuexmwkwjdn</p>
+                            </Stack>
+                            <hr></hr>
+                            <p style={{fontWeight:'bold'}}>What is the difference between stack and heap memory in computer science?</p>
+                            <p>In summary, the stack is ideal for storing small, temporary data that doesn't need to 
+                                persist beyond the function call, while the heap is more flexible and used for 
+                                dynamically allocated memory that can persist throughout the program's lifetime.
+                            </p>
+                            <Stack direction='horizontal' gap={3}>
+                                <Nav.Link>
+                                    <span 
+                                        class="material-symbols-outlined icons" 
+                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
+                                            thumb_up
+                                    </span>
+                                </Nav.Link>
+                                <Nav.Link>
+                                    <span 
+                                        class="material-symbols-outlined icons" 
+                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                            thumb_down
+                                    </span>
+                                </Nav.Link>
+                                <Nav.Link onClick={openCommentInput}>
+                                    <span 
+                                        class="material-symbols-outlined icons" 
+                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                            reply
+                                    </span>
+                                </Nav.Link>
+                                {showCommentInput === 1 && 
+                                    <>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}} className='ms-auto'>
+                                            <span 
+                                                class="material-symbols-outlined icons" 
+                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                    note_add
+                                            </span>
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}}>
+                                            <span 
+                                                class="material-symbols-outlined icons" 
+                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                    add_reaction
+                                            </span>
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
+                                            Cancel
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}}>
+                                            Send
+                                        </Nav.Link>
+                                    </>
+                                }
+                            </Stack>
+                            {showCommentInput === 1 &&
+                                <FloatingLabel controlId="xyz" label="Comments" style={{position:'relative'}}>
+                                    <Form.Control
+                                        as="textarea"
+                                        style={{ height: '70px' }}
+                                    />
+                                </FloatingLabel> 
+                            }   
+                            <hr></hr>
+                            <p style={{fontWeight:'bold', fontSize:'small'}}>All replies : </p>
+                            <div className="reply-block" style={{marginLeft:'3vw'}}>
+                                <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                    <img src="1.png" style={{width:'2vw'}}></img>
+                                    <div className="ms-2 me-auto" style={{fontSize:'small'}}>
+                                        <div className="fw-bold">User's name </div>
+                                        Username
+                                    </div>
+                                    <p className="ms-auto" style={{fontSize:'small'}}> posted on fuexmwkwjdn</p>
+                                </Stack>
+                                <p>In summary, the stack is ideal for storing small, temporary data that doesn't need to 
+                                    persist beyond the function call, while the heap is more flexible and used for 
+                                    dynamically allocated memory that can persist throughout the program's lifetime.
+                                </p>
+                                <Stack direction='horizontal' gap={3}>
+                                    <Nav.Link>
+                                        <span 
+                                            class="material-symbols-outlined icons" 
+                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
+                                                thumb_up
+                                        </span>
+                                    </Nav.Link>
+                                    <Nav.Link>
+                                        <span 
+                                            class="material-symbols-outlined icons" 
+                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                thumb_down
+                                        </span>
+                                    </Nav.Link>
+                                    <Nav.Link style={{fontSize:'small', color:'#f86714'}} onClick={openCommentInput}>
+                                        <span 
+                                            class="material-symbols-outlined icons" 
+                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                reply
+                                        </span>
+                                    </Nav.Link>
+                                    {showCommentInput === 1 && 
+                                    <>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}} className='ms-auto'>
+                                            <span 
+                                                class="material-symbols-outlined icons" 
+                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                    note_add
+                                            </span>
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}}>
+                                            <span 
+                                                class="material-symbols-outlined icons" 
+                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                    add_reaction
+                                            </span>
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
+                                            Cancel
+                                        </Nav.Link>
+                                        <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}}>
+                                            Send
+                                        </Nav.Link>
+                                    </>
+                                    }
+                                </Stack>
+                                {showCommentInput === 1 &&
+                                    <FloatingLabel controlId="xyz" label="Comments" style={{position:'relative'}}>
+                                        <Form.Control
+                                            as="textarea"
+                                            style={{ height: '70px' }}
+                                        />
+                                    </FloatingLabel> 
+                                }         
+                            </div>
+                        </div>
                     </div>
                 }
             </div>

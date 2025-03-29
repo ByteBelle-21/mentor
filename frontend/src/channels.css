@@ -36,6 +36,23 @@
     flex-grow: 1;
 }
 
+.channel-posts{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-top: 1vw;
+}
+
+
+.post-block{
+    background-color: white;
+    padding: 1vw;
+}
+
+.reply-block{
+    background-color: white;
+}
 
 .channel-button{
     width: 90%;
