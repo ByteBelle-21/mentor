@@ -72,17 +72,9 @@ function Channels(){
         }
     }
 
-    useEffect(()=>{
-        console.log(currentChannelDetails);
-    },[currentChannelDetails]);
 
-
-
+    
     const [showCommentInput, setShowCommentInput] = useState(0);
-
-    const openCommentInput = () =>{
-        setShowCommentInput(1);
-    }
 
     const closeCommentInput = () =>{
         setReply('');
@@ -377,6 +369,29 @@ function Channels(){
         }
     }
 
+    const handleNewReply = async(replyToPost) =>{
+        if(!reply){
+            return;
+        }
+        const userId = currUserDetails.id;
+        const channelId = currChannelId;
+        const replyTo = replyToPost;
+        const data = reply;
+        const requestData = { userId,channelId, replyTo, topic, data };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/addPost`, requestData);
+            if (response.status === 200) {
+                closeCommentInput();
+                console.log("Successfully added new reply");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during adding new reply: ",error);
+        }
+    }
+
 
    
 
@@ -600,39 +615,131 @@ function Channels(){
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
                                             <p> {post.data}</p>
-                                            <Stack direction='horizontal' gap={3}>
-                                                <Nav.Link>
+                                            <Stack direction='horizontal' gap={3} style={{ alignItems:'center'}}>
+                                                <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
+                                                    <span>
+                                                        <Badge pill bg="info">
+                                                            {post.likes ?  post.likes : 0}
+                                                        </Badge>
+                                                    </span>
                                                     <span 
                                                         class="material-symbols-outlined icons" 
                                                         style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
                                                             thumb_up
                                                     </span>
                                                 </Nav.Link>
-                                                <Nav.Link>
+                                                <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
+                                                    <span>
+                                                        <Badge pill bg="info">
+                                                            {post.dislikes ? post.dislikes : 0}
+                                                           
+                                                        </Badge>
+                                                    </span>
                                                     <span 
                                                         class="material-symbols-outlined icons" 
                                                         style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                             thumb_down
                                                     </span>
                                                 </Nav.Link>
-                                                <Nav.Link onClick={openCommentInput}>
+                                                <Nav.Link onClick={()=>setShowCommentInput(post.id)} style={{ margin:'0', padding:'0'}}>
                                                     <span 
                                                         class="material-symbols-outlined icons" 
                                                         style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                             reply
                                                     </span>
                                                 </Nav.Link>
+                                                {showCommentInput === post.id && 
+                                                    <>     
+                                                        {replyFiles.length > 0 &&
+                                                            <Nav.Link 
+                                                                className='ms-auto' style={{fontSize:'small', color:'white'}} 
+                                                                onClick={()=>setShowFileReplyPopover(!showFileReplyPopover)}
+                                                                ref={replyFilePopoverTarget}>
+                                                                <Badge bg="warning" text="dark">
+                                                                    Attached files {replyFiles.length}
+                                                                </Badge>
+                                                            </Nav.Link>
+                                                        }
+                                                        <Overlay target={replyFilePopoverTarget} show={showFileReplyPopover} placement='top'>
+                                                            <Popover id="popover-basic"> 
+                                                                <ListGroup as="ol" numbered>
+                                                                    {replyFiles.length > 0 && replyFiles.map((file)=>(
+                                                                        <ListGroup.Item
+                                                                        as="li"
+                                                                        className="d-flex justify-content-between align-items-start"
+                                                                        style={{fontSize:'small'}}
+                                                                        >                                        
+                                                                            <div className="fw-bold">{file.name}</div>                                
+                                                                            <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
+                                                                                <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
+                                                                            </Nav.Link>
+                                                                        </ListGroup.Item>
+                                                                    ))}       
+                                                                </ListGroup>
+                                                            </Popover>
+                                                        </Overlay>
+                                                        <Nav.Link 
+                                                            style={{fontSize:'small', color:'#f86714'}}
+                                                            onClick={()=> fileReplyRef.current.click()}
+                                                            className={replyFiles.length > 0 ? "" : "ms-auto"}>
+                                                            <span 
+                                                                class="material-symbols-outlined icons" 
+                                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                    note_add
+                                                            </span>
+                                                        </Nav.Link>
+                                                        <input 
+                                                            type='file' 
+                                                            style={{ display: 'none' }}
+                                                            ref={fileReplyRef}
+                                                            onChange={(e)=> handleFileInput(e,false, true, false)}
+                                                        />
+                                                        <Nav.Link 
+                                                            style={{fontSize:'small', color:'#f86714'}} 
+                                                            ref={replyEmojiTarget} 
+                                                            onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
+                                                            <span 
+                                                                class="material-symbols-outlined icons" 
+                                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                    add_reaction
+                                                            </span>
+                                                        </Nav.Link>
+                                                        <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
+                                                            <Popover id="popover-basic">
+                                                                <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
+                                                            </Popover>
+                                                        </Overlay>
+                                                        <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
+                                                            Cancel
+                                                        </Nav.Link>
+                                                        <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}} onClick={()=>handleNewReply(post.id)}>
+                                                            Send
+                                                        </Nav.Link>
+                                                    </>
+                                                }
                                             </Stack>
+                                            {showCommentInput === post.id &&
+                                                <FloatingLabel controlId="xyz" label="Comments" style={{marginTop:'0.5vw'}}>
+                                                    <Form.Control
+                                                        as="textarea"
+                                                        style={{ height: '70px' }}
+                                                        ref = {replyTextAreaRef}
+                                                        onChange={(e)=>setReply(e.target.value)}
+                                                        value={reply}
+                                                    />
+                                                </FloatingLabel> 
+                                            }
                                             <hr></hr>
+                                            <p style={{fontWeight:'bold', fontSize:'small'}}>All replies : </p>
                                             {(()=>{
                                                 const nestedReplies = [];
                                                 i = i + 1;
                                                 while(i < currentChannelDetails.length && currentChannelDetails[i].level != 0){
                                                     const childPost = currentChannelDetails[i];
                                                     nestedReplies.push(
-                                                        <div className="reply-block" style={{marginLeft:`${childPost.level * 3}vw`}}>
+                                                        <div className="reply-block" style={{marginLeft:`${childPost.level * 3}vw`, marginTop:'2vw'}}>
                                                             <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
-                                                                <img src={childPost.avatar} style={{width:'2vw'}}></img>
+                                                                <img src={childPost.avatar} style={{width:'1.5vw'}}></img>
                                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                                     <div className="fw-bold">{childPost.name} </div>
                                                                     {childPost.username}
@@ -641,28 +748,119 @@ function Channels(){
                                                             </Stack>
                                                             <p>{childPost.data}</p>
                                                                 <Stack direction='horizontal' gap={3}>
-                                                                    <Nav.Link>
+                                                                    <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
+                                                                        <span>
+                                                                            <Badge pill bg="info">
+                                                                                {childPost.likes ?  childPost.likes : 0}
+                                                                            </Badge>
+                                                                        </span>
                                                                         <span 
                                                                             class="material-symbols-outlined icons" 
                                                                             style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
                                                                                 thumb_up
                                                                         </span>
                                                                     </Nav.Link>
-                                                                    <Nav.Link>
+                                                                    <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
+                                                                        <span>
+                                                                            <Badge pill bg="info">
+                                                                                {childPost.dislikes ? childPost.dislikes : 0}
+                                                                            
+                                                                            </Badge>
+                                                                        </span>
                                                                         <span 
                                                                             class="material-symbols-outlined icons" 
                                                                             style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                                                 thumb_down
                                                                         </span>
                                                                     </Nav.Link>
-                                                                    <Nav.Link style={{fontSize:'small', color:'#f86714'}} onClick={openCommentInput}>
+                                                                    <Nav.Link style={{fontSize:'small', color:'#f86714'}} onClick={()=>setShowCommentInput(childPost.id)}>
                                                                         <span 
                                                                             class="material-symbols-outlined icons" 
                                                                             style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
                                                                                 reply
                                                                         </span>
                                                                     </Nav.Link>
+                                                                    {showCommentInput === childPost.id && 
+                                                                        <>     
+                                                                            {replyFiles.length > 0 &&
+                                                                                <Nav.Link 
+                                                                                    className='ms-auto' style={{fontSize:'small', color:'white'}} 
+                                                                                    onClick={()=>setShowFileReplyPopover(!showFileReplyPopover)}
+                                                                                    ref={replyFilePopoverTarget}>
+                                                                                    <Badge bg="warning" text="dark">
+                                                                                        Attached files {replyFiles.length}
+                                                                                    </Badge>
+                                                                                </Nav.Link>
+                                                                            }
+                                                                            <Overlay target={replyFilePopoverTarget} show={showFileReplyPopover} placement='top'>
+                                                                                <Popover id="popover-basic"> 
+                                                                                    <ListGroup as="ol" numbered>
+                                                                                        {replyFiles.length > 0 && replyFiles.map((file)=>(
+                                                                                            <ListGroup.Item
+                                                                                            as="li"
+                                                                                            className="d-flex justify-content-between align-items-start"
+                                                                                            style={{fontSize:'small'}}
+                                                                                            >                                        
+                                                                                                <div className="fw-bold">{file.name}</div>                                
+                                                                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
+                                                                                                    <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
+                                                                                                </Nav.Link>
+                                                                                            </ListGroup.Item>
+                                                                                        ))}       
+                                                                                    </ListGroup>
+                                                                                </Popover>
+                                                                            </Overlay>
+                                                                            <Nav.Link 
+                                                                                style={{fontSize:'small', color:'#f86714'}}
+                                                                                onClick={()=> fileReplyRef.current.click()}
+                                                                                className={replyFiles.length > 0 ? "" : "ms-auto"}>
+                                                                                <span 
+                                                                                    class="material-symbols-outlined icons" 
+                                                                                    style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                                        note_add
+                                                                                </span>
+                                                                            </Nav.Link>
+                                                                            <input 
+                                                                                type='file' 
+                                                                                style={{ display: 'none' }}
+                                                                                ref={fileReplyRef}
+                                                                                onChange={(e)=> handleFileInput(e,false, true, false)}
+                                                                            />
+                                                                            <Nav.Link 
+                                                                                style={{fontSize:'small', color:'#f86714'}} 
+                                                                                ref={replyEmojiTarget} 
+                                                                                onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
+                                                                                <span 
+                                                                                    class="material-symbols-outlined icons" 
+                                                                                    style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                                        add_reaction
+                                                                                </span>
+                                                                            </Nav.Link>
+                                                                            <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
+                                                                                <Popover id="popover-basic">
+                                                                                    <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
+                                                                                </Popover>
+                                                                            </Overlay>
+                                                                            <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
+                                                                                Cancel
+                                                                            </Nav.Link>
+                                                                            <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}} onClick={()=>handleNewReply(childPost.id)}>
+                                                                                Send
+                                                                            </Nav.Link>
+                                                                        </>
+                                                                    }
                                                                 </Stack>
+                                                                {showCommentInput === childPost.id &&
+                                                                    <FloatingLabel controlId="xyz" label="Comments" style={{marginTop:'0.5vw'}}>
+                                                                        <Form.Control
+                                                                            as="textarea"
+                                                                            style={{ height: '70px' }}
+                                                                            ref = {replyTextAreaRef}
+                                                                            onChange={(e)=>setReply(e.target.value)}
+                                                                            value={reply}
+                                                                        />
+                                                                    </FloatingLabel> 
+                                                                }   
                                                         </div>
                                                     )
                                                     i = i + 1;

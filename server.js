@@ -509,6 +509,8 @@ app.get('/getChannelPosts',(request, response)=>{
             p.topic,
             p.data,
             p.level,
+            p.likes,
+            p.dislikes,
             p.id AS root_id,
             p.datetime AS root_datetime,
             CAST(LPAD(p.id, 10, '0') AS CHAR(255)) AS path
@@ -527,7 +529,9 @@ app.get('/getChannelPosts',(request, response)=>{
             p.datetime,
             p.topic,
             p.data,
-            pT.level,
+            pT.level + 1 AS level,
+            pT.likes,
+            pT.dislikes,
             pT.root_id AS root_id,
             pT.root_datetime AS root_datetime,
             CONCAT(pT.path, '-', LPAD(p.id, 10, '0')) AS path
@@ -545,7 +549,9 @@ app.get('/getChannelPosts',(request, response)=>{
         datetime,
         topic,
         data,
-        level
+        level,
+        likes,
+        dislikes
     FROM postTree
     ORDER BY path ASC`,[channelId,channelId],(error, postResult)=>{
         if (error){
