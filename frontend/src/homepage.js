@@ -104,7 +104,7 @@ function Homepage({giveAccess}){
             return;
         }
         closeSignupModal();
-        const signAvatar = '/Group301.png';
+        const signAvatar = '/Avatars.png';
         const data = {
             signUsername, signName, signPassword, signEmail, signProfession, signSkills: skillsArray, signAvatar
         }

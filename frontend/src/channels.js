@@ -28,13 +28,89 @@ function Channels(){
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
-        getAllConnections();
+        getAllPopularUsers();
     },[]);
 
 
+    const [allChannels, setAllChannels] = useState([]);
+    const getAllChannels = async() =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/getAllChannels`);
+            if (response.status === 200) {
+                setAllChannels(response.data);
+                console.log("Successfully retrieved all channels details");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all channels details: ",error);
+        }
+    }
+
+
+   
+    const [channel, setChannel] = useState("Homepage");
+    const [currChannelId, setCurrChannelId] = useState(0);
+    const [currentChannelDetails, setCurrentChannelDetails] = useState([]);
+
+    const handleChannelSelection = async (channelId, channelName) =>{
+        setChannel(channelName);
+        setCurrChannelId(channelId);
+        try {
+            const response = await axios.get(`${window.BASE_URL}/getChannelPosts`,
+            { params: {channel:channelId}});
+            if (response.status === 200) {
+                setCurrentChannelDetails(response.data);
+                console.log(response.data);
+            } 
+            else if(response.status === 401){
+                console.log(response.message)
+            }
+        } catch (error){
+            console.error("Catched axios error during retriving channel post: ",error);
+        }
+    }
+
+    useEffect(()=>{
+        console.log(currentChannelDetails);
+    },[currentChannelDetails]);
+
+
+
+    const [showCommentInput, setShowCommentInput] = useState(0);
+
+    const openCommentInput = () =>{
+        setShowCommentInput(1);
+    }
+
+    const closeCommentInput = () =>{
+        setReply('');
+        setReplyFiles([]);
+        setShowFileReplyPopover(false);
+        setShowCommentInput(0);
+    }
+
+
+
+    const [popularUsers, setPopularUsers] =  useState([]);
+    const getAllPopularUsers = async() =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/activeUsers`);
+            if (response.status === 200) {
+                setPopularUsers(response.data);
+                console.log("Successfully retrieved all popular users");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all popular users: ",error);
+        }
+    }
+
 
     const[currUserDetails, setCurrUserDetails] = useState([]);
-
     const getCurrUserDertails = async() =>{
         const username  =  sessionStorage.getItem('session_user');
         const data = { username };
@@ -53,39 +129,37 @@ function Channels(){
     }
 
 
-    const[channels, setChannels] = useState([]);
-
-    const getAllChannels = async() =>{
+    const [connectedUserDetails, setConnectedUserDetails] =  useState([]);
+    const getConnectedUserDetails = async(user) =>{
+        const username  =  user;
+        const data = { username };
         try {
-            const response =  await axios.get(`${window.BASE_URL}/getAllChannels`);
+            const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
-                setChannels(response.data);
-                console.log("Successfully retrieved all channels details");
+                setConnectedUserDetails(response.data);
+                openProfileCanvas();
+                console.log("Successfully retrieved connected  user details");
             } 
             else{
                 console.log(response.message)
             }
         } catch (error) {
-            console.error("Catched axios error during retriving all channels details: ",error);
+            console.error("Catched axios error during retriving connected user details: ",error);
         }
     }
 
 
-    const [connections, setConnections] =  useState([]);
-    const getAllConnections = async() =>{
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUserDetails.id}});
-            if (response.status === 200) {
-                setConnections(response.data);
-                console.log("Successfully retrieved all connections");
-            } 
-            else{
-                console.log(response.message)
-            }
-        } catch (error) {
-            console.error("Catched axios error during retriving all connections: ",error);
-        }
+    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
+
+    const openProfileCanvas =()=>{
+        closeMessageCanvas();
+        setShowProfileCanvas(true);
     }
+
+    const closeProfileCanvas = ()=>{
+        setShowProfileCanvas(false);
+    }
+
 
 
 
@@ -285,13 +359,14 @@ function Channels(){
             return;
         }
         const userId = currUserDetails.id;
-        const channelId = 0;
+        const channelId = currChannelId;
         const replyTo = 0;
         const requestData = { userId,channelId, replyTo, topic, data };
         try {
             const response =  await axios.post(`${window.BASE_URL}/addPost`, requestData);
             if (response.status === 200) {
                 closePostModal();
+                handleChannelSelection(channelId, channel);
                 console.log("Successfully added new post");
             } 
             else{
@@ -303,47 +378,7 @@ function Channels(){
     }
 
 
-    const [channel, setChannel] = useState("Homepage");
-
-    const [showCommentInput, setShowCommentInput] = useState(0);
-
-    const openCommentInput = () =>{
-        setShowCommentInput(1);
-    }
-
-    const closeCommentInput = () =>{
-        setReply('');
-        setReplyFiles([]);
-        setShowFileReplyPopover(false);
-        setShowCommentInput(0);
-    }
-
-
-    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
-
-    const openProfileCanvas =()=>{
-        closeMessageCanvas();
-        setShowProfileCanvas(true);
-    }
-
-    const closeProfileCanvas = ()=>{
-        setShowProfileCanvas(false);
-    }
-
-    const [showMessageCanvas, setShowMessageCanvas] = useState(false); 
-
-    const openMessageCanvas =()=>{
-        closeProfileCanvas();
-        setShowMessageCanvas(true);
-    }
-
-    const closeMessageCanvas = ()=>{
-        setShowMessageCanvas(false);
-    }
-
-
-    const [showOverlay, setShowOverlay] = useState(false); 
-    const target = useRef(null);
+   
 
     return(
 
@@ -386,10 +421,19 @@ function Channels(){
             </Modal>
             <div className='small-container'>
                 <Button className='channel-button' onClick={openChannelModal}> <span class="material-symbols-outlined"> add </span>  New Channel</Button>
-                <ListGroup variant="flush" className='channel-list'>
+                <ListGroup variant="flush" className='channel-list' >
                     <ListGroup.Item> # • All Channels</ListGroup.Item>
-                    {channels.length > 0 && channels.map((channel)=>(
-                         <ListGroup.Item className='channel-item'># • {channel.name}</ListGroup.Item>
+                    <ListGroup.Item 
+                        className='channel-item' 
+                        onClick={()=>setChannel("Homepage")}>
+                            # • Homepage
+                    </ListGroup.Item>
+                    {allChannels.length > 0 && allChannels.map((channel)=>(
+                         <ListGroup.Item 
+                            className='channel-item' 
+                            onClick={()=>handleChannelSelection(channel.id, channel.name)}>
+                                # • {channel.name}
+                        </ListGroup.Item>
                     ))}
                 </ListGroup>
             </div>
@@ -522,7 +566,7 @@ function Channels(){
                     }
                     
                 </div>
-                {channel !== "Homepage" ? 
+                {channel === "Homepage" ? 
                     <div className='homepage-channel'>
                         <span class="material-symbols-outlined icons" style={{fontSize:'2vw', margin:'0', padding:'0', color:'#f86714'}}>groups</span>
                         <h5 style={{fontWeight:'bold'}}>Welcome to AskMentor</h5>
@@ -537,196 +581,101 @@ function Channels(){
                     </div>
                     :
                     <div className='channel-posts'>
-                        <div className="post-block">
-                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
-                                <img src="1.png" style={{width:'2vw'}}></img>
-                                <div className="ms-2 me-auto" style={{fontSize:'small'}}>
-                                    <div className="fw-bold">User's name </div>
-                                    Username
-                                </div>
-                                <p className="ms-auto" style={{fontSize:'small'}}> posted on fuexmwkwjdn</p>
-                            </Stack>
-                            <hr></hr>
-                            <p style={{fontWeight:'bold'}}>What is the difference between stack and heap memory in computer science?</p>
-                            <p>In summary, the stack is ideal for storing small, temporary data that doesn't need to 
-                                persist beyond the function call, while the heap is more flexible and used for 
-                                dynamically allocated memory that can persist throughout the program's lifetime.
-                            </p>
-                            <Stack direction='horizontal' gap={3}>
-                                <Nav.Link>
-                                    <span 
-                                        class="material-symbols-outlined icons" 
-                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
-                                            thumb_up
-                                    </span>
-                                </Nav.Link>
-                                <Nav.Link>
-                                    <span 
-                                        class="material-symbols-outlined icons" 
-                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                            thumb_down
-                                    </span>
-                                </Nav.Link>
-                                <Nav.Link onClick={openCommentInput}>
-                                    <span 
-                                        class="material-symbols-outlined icons" 
-                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                            reply
-                                    </span>
-                                </Nav.Link>
-                                {showCommentInput === 1 && 
-                                    <>     
-                                        {replyFiles.length > 0 &&
-                                            <Nav.Link 
-                                                className='ms-auto' style={{fontSize:'small', color:'white'}} 
-                                                onClick={()=>setShowFileReplyPopover(!showFileReplyPopover)}
-                                                ref={replyFilePopoverTarget}>
-                                                <Badge bg="warning" text="dark">
-                                                    Attached files {replyFiles.length}
-                                                </Badge>
-                                            </Nav.Link>
-                                        }
-                                        <Overlay target={replyFilePopoverTarget} show={showFileReplyPopover} placement='top'>
-                                            <Popover id="popover-basic"> 
-                                                <ListGroup as="ol" numbered>
-                                                    {replyFiles.length > 0 && replyFiles.map((file)=>(
-                                                        <ListGroup.Item
-                                                        as="li"
-                                                        className="d-flex justify-content-between align-items-start"
-                                                        style={{fontSize:'small'}}
-                                                        >                                        
-                                                            <div className="fw-bold">{file.name}</div>                                
-                                                            <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
-                                                                <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
-                                                            </Nav.Link>
-                                                        </ListGroup.Item>
-                                                    ))}       
-                                                </ListGroup>
-                                            </Popover>
-                                        </Overlay>
-                                        <Nav.Link 
-                                            style={{fontSize:'small', color:'#f86714'}}
-                                            onClick={()=> fileReplyRef.current.click()}
-                                            className={replyFiles.length > 0 ? "" : "ms-auto"}>
-                                            <span 
-                                                class="material-symbols-outlined icons" 
-                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                    note_add
-                                            </span>
-                                        </Nav.Link>
-                                        <input 
-                                            type='file' 
-                                            style={{ display: 'none' }}
-                                            ref={fileReplyRef}
-                                            onChange={(e)=> handleFileInput(e,false, true, false)}
-                                        />
-                                        <Nav.Link 
-                                            style={{fontSize:'small', color:'#f86714'}} 
-                                            ref={replyEmojiTarget} 
-                                            onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
-                                            <span 
-                                                class="material-symbols-outlined icons" 
-                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                    add_reaction
-                                            </span>
-                                        </Nav.Link>
-                                        <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
-                                            <Popover id="popover-basic">
-                                                <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
-                                            </Popover>
-                                        </Overlay>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
-                                            Cancel
-                                        </Nav.Link>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}}>
-                                            Send
-                                        </Nav.Link>
-                                    </>
+                        {currentChannelDetails && currentChannelDetails.length > 0 && (()=>{
+                            const postsStructure = [];
+                            let i = 0;
+                            while(i < currentChannelDetails.length){
+                                const post = currentChannelDetails[i];
+                                if(post.level === 0){
+                                    postsStructure.push(
+                                        <div  className="post-block">
+                                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                                <img src="1.png" style={{width:'2vw'}}></img>
+                                                <div className="ms-2 me-auto" style={{fontSize:'small'}}>
+                                                    <div className="fw-bold">{post.name} </div>
+                                                    {post.username}
+                                                </div>
+                                                <p className="ms-auto" style={{fontSize:'small'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
+                                            </Stack>
+                                            <hr></hr>
+                                            <p style={{fontWeight:'bold'}}>{post.topic}</p>
+                                            <p> {post.data}</p>
+                                            <Stack direction='horizontal' gap={3}>
+                                                <Nav.Link>
+                                                    <span 
+                                                        class="material-symbols-outlined icons" 
+                                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
+                                                            thumb_up
+                                                    </span>
+                                                </Nav.Link>
+                                                <Nav.Link>
+                                                    <span 
+                                                        class="material-symbols-outlined icons" 
+                                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                            thumb_down
+                                                    </span>
+                                                </Nav.Link>
+                                                <Nav.Link onClick={openCommentInput}>
+                                                    <span 
+                                                        class="material-symbols-outlined icons" 
+                                                        style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                            reply
+                                                    </span>
+                                                </Nav.Link>
+                                            </Stack>
+                                            <hr></hr>
+                                            {(()=>{
+                                                const nestedReplies = [];
+                                                i = i + 1;
+                                                while(i < currentChannelDetails.length && currentChannelDetails[i].level != 0){
+                                                    const childPost = currentChannelDetails[i];
+                                                    nestedReplies.push(
+                                                        <div className="reply-block" style={{marginLeft:`${childPost.level * 3}vw`}}>
+                                                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                                                <img src={childPost.avatar} style={{width:'2vw'}}></img>
+                                                                <div className="ms-2 me-auto" style={{fontSize:'small'}}>
+                                                                    <div className="fw-bold">{childPost.name} </div>
+                                                                    {childPost.username}
+                                                                </div>
+                                                                <p className="ms-auto" style={{fontSize:'small'}}> posted on { new Date(childPost.datetime).toLocaleString()}</p>
+                                                            </Stack>
+                                                            <p>{childPost.data}</p>
+                                                                <Stack direction='horizontal' gap={3}>
+                                                                    <Nav.Link>
+                                                                        <span 
+                                                                            class="material-symbols-outlined icons" 
+                                                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
+                                                                                thumb_up
+                                                                        </span>
+                                                                    </Nav.Link>
+                                                                    <Nav.Link>
+                                                                        <span 
+                                                                            class="material-symbols-outlined icons" 
+                                                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                                thumb_down
+                                                                        </span>
+                                                                    </Nav.Link>
+                                                                    <Nav.Link style={{fontSize:'small', color:'#f86714'}} onClick={openCommentInput}>
+                                                                        <span 
+                                                                            class="material-symbols-outlined icons" 
+                                                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
+                                                                                reply
+                                                                        </span>
+                                                                    </Nav.Link>
+                                                                </Stack>
+                                                        </div>
+                                                    )
+                                                    i = i + 1;
+                                                }
+                                                return nestedReplies;
+                                            })()}
+                                        </div>
+                                    )
                                 }
-                            </Stack>
-                            {showCommentInput === 1 &&
-                                <FloatingLabel controlId="xyz" label="Comments" style={{position:'relative'}}>
-                                    <Form.Control
-                                        as="textarea"
-                                        style={{ height: '70px' }}
-                                        ref = {replyTextAreaRef}
-                                        onChange={(e)=>setReply(e.target.value)}
-                                        value={reply}
-                                    />
-                                </FloatingLabel> 
-                            }   
-                            <hr></hr>
-                            <p style={{fontWeight:'bold', fontSize:'small'}}>All replies : </p>
-                            <div className="reply-block" style={{marginLeft:'3vw'}}>
-                                <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
-                                    <img src="1.png" style={{width:'2vw'}}></img>
-                                    <div className="ms-2 me-auto" style={{fontSize:'small'}}>
-                                        <div className="fw-bold">User's name </div>
-                                        Username
-                                    </div>
-                                    <p className="ms-auto" style={{fontSize:'small'}}> posted on fuexmwkwjdn</p>
-                                </Stack>
-                                <p>In summary, the stack is ideal for storing small, temporary data that doesn't need to 
-                                    persist beyond the function call, while the heap is more flexible and used for 
-                                    dynamically allocated memory that can persist throughout the program's lifetime.
-                                </p>
-                                <Stack direction='horizontal' gap={3}>
-                                    <Nav.Link>
-                                        <span 
-                                            class="material-symbols-outlined icons" 
-                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
-                                                thumb_up
-                                        </span>
-                                    </Nav.Link>
-                                    <Nav.Link>
-                                        <span 
-                                            class="material-symbols-outlined icons" 
-                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                thumb_down
-                                        </span>
-                                    </Nav.Link>
-                                    <Nav.Link style={{fontSize:'small', color:'#f86714'}} onClick={openCommentInput}>
-                                        <span 
-                                            class="material-symbols-outlined icons" 
-                                            style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                reply
-                                        </span>
-                                    </Nav.Link>
-                                    {showCommentInput === 1 && 
-                                    <>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}} className='ms-auto'>
-                                            <span 
-                                                class="material-symbols-outlined icons" 
-                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                    note_add
-                                            </span>
-                                        </Nav.Link>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714'}}>
-                                            <span 
-                                                class="material-symbols-outlined icons" 
-                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                    add_reaction
-                                            </span>
-                                        </Nav.Link>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
-                                            Cancel
-                                        </Nav.Link>
-                                        <Nav.Link style={{fontSize:'small', color:'#f86714' , fontWeight:'bold'}}>
-                                            Send
-                                        </Nav.Link>
-                                    </>
-                                    }
-                                </Stack>
-                                {showCommentInput === 1 &&
-                                    <FloatingLabel controlId="xyz" label="Comments" style={{position:'relative'}}>
-                                        <Form.Control
-                                            as="textarea"
-                                            style={{ height: '70px' }}
-                                        />
-                                    </FloatingLabel> 
-                                }         
-                            </div>
-                        </div>
+                            }
+                            return postsStructure; 
+                        })()}
+                        
                     </div>
                 }
             </div>
@@ -756,11 +705,11 @@ function Channels(){
                 }
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
-                        <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
-                        {connections.length > 0 && connections.map((user)=>(
+                        <ListGroup.Item style={{fontWeight:'bold'}}># • Suggested Connections For You</ListGroup.Item>
+                        {popularUsers.length > 0 && popularUsers.map((user)=>(
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                                <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
+                                <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getConnectedUserDetails(user.username)}>View Profile</p></p>
                                 <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
                             </ListGroup.Item>
                         ))}
@@ -770,88 +719,51 @@ function Channels(){
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
                         </Offcanvas.Header>
                         <Offcanvas.Body className='profile-canvas-body'>
-                            <img src="Group301.png" className='canvas-img'></img>
-                            <p style={{fontWeight:'bold', margin:'0'}}>@username</p>
-                            <p>usre name here</p>
-                            <p>hellp curent! 👋 Nice to meet you.I am profession! Lets connect and share our ideas.</p>
-                            <Button className='send-message-button'>Send Message</Button>
-                            <hr style={{width:'90%'}}></hr>
-                            <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
-                            <Stack direction="horizontal" className='info-stack'>
-                                <Stack className='info-block'> 
-                                    <p style={{margin:'0', fontWeight:'bold'}}>30</p>
-                                    <p>Posts</p>
+                            {connectedUserDetails.length > 0 &&
+                            <>
+                                <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
+                                <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
+                                <p>{connectedUserDetails.userInfo.name}</p>
+                                <p>hellp {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
+                                <Button className='send-message-button'>Send Message</Button>
+                                <hr style={{width:'90%'}}></hr>
+                                <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
+                                <Stack direction="horizontal" className='info-stack'>
+                                    <Stack className='info-block'> 
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.totalPosts}</p>
+                                        <p>Posts</p>
+                                    </Stack>
+                                    <Stack className='info-block'>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.connections}</p>
+                                        <p>Connections</p>
+                                    </Stack>
+                                    <Stack className='info-block'>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                        <p>Experties</p>
+                                    </Stack>
                                 </Stack>
-                                <Stack className='info-block'>
-                                    <p style={{margin:'0', fontWeight:'bold'}}>30</p>
-                                    <p>Connections</p>
+                                <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
+                                <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
+                                    {connectedUserDetails.media.length >  0 && connectedUserDetails.media.map((account)=>{
+                                        <Nav.Link >
+                                            <Image  src={account.image}  className="social-media-img"  roundedCircle />
+                                        </Nav.Link>
+                                    })}
                                 </Stack>
-                                <Stack className='info-block'>
-                                    <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
-                                    <p>Experties</p>
-                                </Stack>
-                            </Stack>
-                            <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                            <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
-                                <Nav.Link >
-                                    <Image  src="1.png"  className="social-media-img"  roundedCircle />
-                                </Nav.Link>
-                                <Nav.Link >
-                                    <Image  src="2.png"  className="social-media-img"  roundedCircle />
-                                </Nav.Link>
-                                <Nav.Link >
-                                    <Image  src="3.png"  className="social-media-img"  roundedCircle />
-                                </Nav.Link>
-                            </Stack>
-                            <hr style={{width:'90%'}}></hr>
-                            <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
-                            <ListGroup className='history-list'>
-                                <ListGroup.Item as="li" className='activity-list-item'>
-                                    <div className="fw-bold" style={{color:'#d84434'}}>channel name here </div>
-                                    <p style={{fontSize:'small'}} >mwjhfgwqhf wkfr kjwbfj fjh .......</p>
-                                </ListGroup.Item>
-                            </ListGroup>
+                                <hr style={{width:'90%'}}></hr>
+                                <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
+                                <ListGroup className='history-list'>
+                                    <ListGroup.Item as="li" className='activity-list-item'>
+                                        <div className="fw-bold" style={{color:'#d84434'}}>channel name here </div>
+                                        <p style={{fontSize:'small'}} >mwjhfgwqhf wkfr kjwbfj fjh .......</p>
+                                    </ListGroup.Item>
+                                </ListGroup>
+                            </>
+                        }
                         </Offcanvas.Body>
                     </Offcanvas>
 
-                    <Offcanvas show={showMessageCanvas} onHide={closeMessageCanvas} placement='end' style={{width:'30%'}}>
-                        <Offcanvas.Header>
-                            <Stack direction='horizontal'>
-                                <img src='Group301.png' style={{width:'12%', marginRight:'0.5vw'}}></img>
-                                <p style={{margin:0}}>user name here<p style={{margin:0, fontWeight:'bold', fontSize:'small'}}>@username</p></p>
-                            </Stack>
-                        </Offcanvas.Header>
-                        <hr style={{width:'100%', margin:'0'}}></hr>
-                        <Offcanvas.Body>
-                            <div>
-                                <div className='received-msg'>
-                                    <p>jhjehfjh</p>
-                                </div>
-                                <div className='sent-msg'>
-                                    <p>jhfbjehfjhe</p>
-                                </div>
-
-                            </div>
-                           <Stack direction='horizontal' className='textarea-stack'>
-                           <Nav.Link onClick={()=>setShowOverlay(!showOverlay)} ref={target}>
-                                <span class="material-symbols-outlined icons" style={{fontSize:'1.5vw'}}>add</span>
-                            </Nav.Link>
-                            <Overlay target={target.current} show={showOverlay} placement="top">
-                                <Tooltip  >
-                                    <Nav.Link className='tooltip-text'> Add reaction</Nav.Link> 
-                                    
-                                    <Nav.Link className='tooltip-text'> Attach File</Nav.Link>  
-                                </Tooltip>                     
-                            </Overlay>
-                            <TextareaAutosize  
-                                placeholder="Add your message here"  
-                                className='textarea-block '
-                                />
-                                <Nav.Link><span class="material-symbols-outlined icons" style={{fontSize:'1.5vw'}}>send</span></Nav.Link>
-                           </Stack>                 
-                        </Offcanvas.Body>
-                    </Offcanvas>
-
+        
 
                 </div>
                 
