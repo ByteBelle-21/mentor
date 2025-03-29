@@ -80,7 +80,8 @@ db.getConnection((err,connection)=>{
                             ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                             userId INT NOT NULL,
                             type TEXT NOT NULL,
-                            link TEXT NOT NULL
+                            link TEXT NOT NULL,
+                            image VARCHAR(100) NOT NULL
                             )`,error=>{
                                 if(error){
                                     console.log("Error occured while creating media table : ", error);
@@ -492,6 +493,90 @@ function afterPostUpload(user,channel){
         console.log("Successfully updated total posts in postForum.userTable");
     });
 }
+
+
+
+app.get('/getChannelPosts',(request, response)=>{
+    const channelId = request.query.channel;
+    db.query(`WITH RECURSIVE postTree AS (
+        SELECT 
+            p.id,
+            p.replyTo,
+            u.username,
+            u.name,
+            u.avatar,
+            p.datetime,
+            p.topic,
+            p.data,
+            p.level,
+            p.id AS root_id,
+            p.datetime AS root_datetime,
+            CAST(LPAD(p.id, 10, '0') AS CHAR(255)) AS path
+        FROM postForum.postTable p
+        JOIN postForum.userTable u ON p.userId = u.id
+        WHERE p.replyTo = 0 AND p.channelId = ?
+        
+        UNION ALL
+        
+        SELECT 
+            p.id,
+            p.replyTo,
+            u.username,
+            u.name,
+            u.avatar,
+            p.datetime,
+            p.topic,
+            p.data,
+            pT.level,
+            pT.root_id AS root_id,
+            pT.root_datetime AS root_datetime,
+            CONCAT(pT.path, '-', LPAD(p.id, 10, '0')) AS path
+        FROM postForum.postTable p
+        JOIN postForum.userTable u ON p.userId = u.id
+        INNER JOIN postTree pT ON p.replyTo = pT.id
+        WHERE p.channelId = ?
+    )
+    SELECT 
+        id,
+        replyTo,
+        username,
+        name,
+        avatar,
+        datetime,
+        topic,
+        data,
+        level
+    FROM postTree
+    ORDER BY path ASC`,[channelId,channelId],(error, postResult)=>{
+        if (error){
+            console.log(error);
+            response.status(500).send("Server error during retrieving postTree");
+            return;
+        }
+
+            const postPromises = postResult.map((post) => {
+                return new Promise((resolve, reject) => {
+                    db.query(`SELECT fileName, fileType, file FROM postForum.fileTable WHERE postId=?`, [post.id], (error, fileResult) => {
+                        if (error) {
+                            reject("Server error during retrieving files");
+                        } else {
+                            resolve({ ...post, files: fileResult.length > 0 ? fileResult : [] });
+                        }
+                    });
+                });
+            });
+            Promise.all(postPromises)
+            .then(allPostsWithFiles => {
+                response.status(200).json(allPostsWithFiles);
+            })
+            .catch((error) => {
+                console.log(error);
+                response.status(500).send(error);
+            });
+            
+        })
+
+})
 
 
 app.get('/searchChannel',(request, response)=>{
