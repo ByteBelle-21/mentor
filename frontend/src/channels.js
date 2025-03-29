@@ -19,6 +19,7 @@ import axios from 'axios';
 import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';
+import Homepage from './homepage';
 
 function Channels(){
 
@@ -239,6 +240,9 @@ function Channels(){
     }
 
 
+    const [channel, setChannel] = useState("Homepage");
+
+
     const [showProfileCanvas, setShowProfileCanvas] = useState(false);
 
     const openProfileCanvas =()=>{
@@ -322,11 +326,20 @@ function Channels(){
                     centered
                     >
                     <Form className='join-form'>
-                        <Stack direction='horizontal' gap={2} className='title_stack'>
-                            <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
-                            Create new Post 
-                        </Stack>
-                        <p>Channel : <span style={{fontWeight:'bold'}}># Channel name </span></p>
+                        {channel === "Homepage" ? 
+                            <Stack direction='horizontal' gap={2} className='title_stack'>
+                                <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
+                                How to Create New Post 
+                            </Stack>
+                        :
+                            <>
+                                <Stack direction='horizontal' gap={2} className='title_stack'>
+                                    <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
+                                    Create new Post 
+                                </Stack>
+                                <p>Channel : <span style={{fontWeight:'bold'}}>{channel}</span></p>
+                            </>
+                        }
                         {postError ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Please fill out all required field</p>:<></>}
                         {post500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
                         <Form.Group className='post-form-group'>
@@ -347,6 +360,8 @@ function Channels(){
                                 style={{borderColor:'red'}} 
                                 onChange={(e)=>{setTopic(e.target.value),closePostErrors()}} 
                                 value={topic}
+                                placeholder={channel === "Homepage" && "Add post's topic here. You can also add emoji"}
+                                readOnly = {channel === "Homepage" ? true :  false}
                             />
                         </Form.Group>
                         <Form.Group className='post-form-group'>
@@ -369,6 +384,8 @@ function Channels(){
                                 style={{borderColor:'blue'}}
                                 onChange={(e)=>{setData(e.target.value), closePostErrors()}}
                                 value={data}
+                                placeholder={channel === "Homepage" && "Add post's data here. You can also add emoji"}
+                                readOnly = {channel === "Homepage" ? true :  false}
                             />
                         </Form.Group>
                         <Form.Group className='post-form-group file-group'>
@@ -402,19 +419,47 @@ function Channels(){
                             </Overlay>
                         </Form.Group>
                         <Stack direction='horizontal' gap={4}>
-                            <Button className='channel-form-button' onClick={closePostModal}>
-                                Cancel
-                            </Button>
-                            <Button className='channel-form-button' onClick={handleNewPost}>
-                                Create
-                            </Button>
+                            { channel !== "Homepage" ? 
+                                <>
+                                    <Button className='channel-form-button' onClick={closePostModal}>
+                                        Cancel
+                                    </Button>
+                                    <Button className='channel-form-button' onClick={handleNewPost}>
+                                        Create
+                                    </Button>
+                                </>
+                                :
+                                <Button className='channel-form-button' onClick={closePostModal}>
+                                        Close
+                                </Button>
+                            }
                         </Stack>
                     </Form>
                 </Modal>
                 <div className='new-post-block'>
-                    <h4 style={{fontWeight:'bold'}}># • Channel Name </h4>
-                    <Button className='ms-auto new-post-button' onClick={openPostModal}>What's on Your Mind?</Button>
+                    <h4 style={{fontWeight:'bold'}}># • {channel} </h4>
+                    {channel === "Homepage" 
+                        ?
+                        <Button className='ms-auto new-post-button' onClick={openPostModal}>How to Create New Post?</Button>
+                        :   
+                        <Button className='ms-auto new-post-button' onClick={openPostModal}>What's on Your Mind?</Button> 
+                    }
+                    
                 </div>
+                {channel === "Homepage" && 
+                    <div className='homepage-channel'>
+                        <span class="material-symbols-outlined icons" style={{fontSize:'2vw', margin:'0', padding:'0', color:'#f86714'}}>groups</span>
+                        <h5 style={{fontWeight:'bold'}}>Welcome to AskMentor</h5>
+                        <p>Start engaging with other members by creating channels, posting, replying, and now... messaging!</p>
+                        <ul>
+                            <li><strong>Create a new channel:</strong> Start a fresh topic!</li>
+                            <li><strong>Add a new post:</strong> Share your thoughts in any of the channels.</li>
+                            <li><strong>Reply to posts:</strong> Join in and keep the conversation alive!</li>
+                            <li><strong>Send direct messages:</strong> Want to talk privately? Send a direct message.</li>
+                        </ul>
+                        <p style={{fontWeight:'bold'}}>Start Browsing Now</p>
+                    </div>
+                }
             </div>
             <div className='small-container'>
                 {currUserDetails ? 

@@ -19,12 +19,23 @@
 }
 
 .large-container{
-   
+    display: flex;
+    flex-direction: column;
     margin-left: 1vw;
     margin-right: 1vw;
     flex-grow: 1;
     height: 100%;
 }
+
+.homepage-channel{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.5;
+    flex-grow: 1;
+}
+
 
 .channel-button{
     width: 90%;
