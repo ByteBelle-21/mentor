@@ -539,8 +539,12 @@ function Profile(){
                 </Form>
                 <hr style={{marginBottom:'1vw', marginTop:'2vw'}}></hr>
                 <p style={{fontWeight:'bold'}}># Activity History</p>
-               tyle={{fontSize:'small'}} >mwjhfgwqhf wkfr kjwbfj fjh .......</p>
-                    </ListGroup.Item>
+                <ListGroup className='history-list'>
+                    {currUserDetails.post && currUserDetails.post.map((currPost)=>{
+                        <ListGroup.Item as="li" className='activity-list-item'>
+                            <div className="fw-bold" style={{color:'#d84434'}}>{currPost.channel}</div>
+                            <p style={{fontSize:'small'}} >showPreview({currPost.data, 10})</p>
+                        </ListGroup.Item>
                     })}
                 </ListGroup>
             </div>
