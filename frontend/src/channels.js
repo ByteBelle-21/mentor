@@ -28,8 +28,8 @@ function Channels(){
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
-        getAllPopularUsers();
     },[]);
+
 
 
     const [allChannels, setAllChannels] = useState([]);
@@ -84,10 +84,6 @@ function Channels(){
     }
 
 
-
-
-
-
     const[currUserDetails, setCurrUserDetails] = useState([]);
     const getCurrUserDertails = async() =>{
         const username  =  sessionStorage.getItem('session_user');
@@ -96,6 +92,7 @@ function Channels(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setCurrUserDetails(response.data.userInfo);
+                getAllConnections(response.data.userInfo.id);
                 console.log("Successfully retrieved current user details");
             } 
             else{
@@ -106,27 +103,23 @@ function Channels(){
         }
     }
 
-
-    const [popularUsers, setPopularUsers] =  useState([]);
-    const getAllPopularUsers = async() =>{
-        const username  =  sessionStorage.getItem('session_user');
+    const [connections, setConnections] =  useState([]);
+    const getAllConnections = async(currUser) =>{
         try {
-            const response =  await axios.get(`${window.BASE_URL}/activeUsers`, {
-                params:{
-                    currUser : username
-                }
-            });
+            const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUser}});
             if (response.status === 200) {
-                setPopularUsers(response.data);
-                console.log("Successfully retrieved all popular users",response.data);
+                setConnections(response.data);
+                console.log("Successfully retrieved all connections");
             } 
             else{
                 console.log(response.message)
             }
         } catch (error) {
-            console.error("Catched axios error during retriving all popular users: ",error);
+            console.error("Catched axios error during retriving all connections: ",error);
         }
     }
+
+
 
     const [showProfileCanvas, setShowProfileCanvas] = useState(false);
 
@@ -242,8 +235,7 @@ function Channels(){
 
     const replyFilePopoverTarget = useRef(null);
     const postFilePopoverTarget = useRef(null);
-    const msgFilePopoverTarget = useRef(null);
-
+  
     const [post500Error, setPost500Error] = useState(false);
     const [postError, setPostError] = useState(false);
     
@@ -409,12 +401,9 @@ function Channels(){
     }
 
 
-    const openCanvasOnOtherPage = (avatar,username, name, userId)=>{
+    const openCanvasOnOtherPage = (username)=>{
         const params = {
-            avatar : avatar,
-            username: username,
-            name : name,
-            userId:userId
+            userFromState: username,
         }
         navigateTo('/profile',{state:params});
     }
@@ -927,11 +916,11 @@ function Channels(){
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
                         <ListGroup.Item style={{fontWeight:'bold'}}># • Suggested Connections For You</ListGroup.Item>
-                        {popularUsers.length > 0 && popularUsers.map((user)=>(
+                        {connections.length > 0 && connections.map((user)=>(
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                                 <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getselectedUserDetails(user.username)}>View Profile</p></p>
-                                <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.avatar, user.username, user.name, user.id)} >Message</p>
+                                <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.username)} >Message</p>
                             </ListGroup.Item>
                         ))}
                     </ListGroup>

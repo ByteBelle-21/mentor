@@ -159,131 +159,77 @@ function Profile(){
         return words.slice(0, num).join(' ')+" . . . . . . . .";
     }
 
+    const [popularUsers, setPopularUsers] =  useState([]);
+    const getAllPopularUsers = async() =>{
+        const username  =  sessionStorage.getItem('session_user');
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/activeUsers`, {
+                params:{
+                    currUser : username
+                }
+            });
+            if (response.status === 200) {
+                setPopularUsers(response.data);
+                console.log("Successfully retrieved all popular users",response.data);
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all popular users: ",error);
+        }
+    }
+
+    const [allPopularChannels, setAllPopularChannels] = useState([]);
+    const getAllPopularChannels = async() =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/activeChannels`);
+            if (response.status === 200) {
+                setAllPopularChannels(response.data);
+                console.log("Successfully retrieved all popular channels details");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all popular channels details: ",error);
+        }
+    }
+
+    useEffect(()=>{
+        getAllPopularChannels();
+        getAllPopularUsers();
+    })
+
+    const openCanvasOnOtherPage = (username)=>{
+        const params = {
+            userFromState: username,
+        }
+        navigateTo('/profile',{state:params});
+    }
 
     return(
         <div className='profile-page'>
-            <div className='first-container'>
+           <div className='first-container'>
+                <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
+                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
                 <ListGroup variant="flush" >
-                    <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
-                    {connections.length > 0 && connections.map((user)=>(
-                            <ListGroup.Item className='message-item'>
+                    {popularUsers.length > 0 && popularUsers.map((user)=>(
+                        <ListGroup.Item className='message-item'>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getConnectedUserDetails(user.username)}>View Profile</p></p>
-                            <p className='ms-auto view-profile-button' 
-                                onClick={()=>{
-                                    setCurrAvatar(user.avatar),
-                                    setCurrName(user.name),
-                                    setCurrUsername(user.username)
-                                    getAllMessages(user.id, user.username)}
-                                
-                                }>Message</p>
+                            <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getselectedUserDetails(user.username)}>View Profile</p></p>
+                            <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.username)} >Message</p>
                         </ListGroup.Item>
                     ))}
                 </ListGroup>
-                <Offcanvas show={showProfileCanvas} onHide={closeProfileCanvas} placement='end'>
-                    <Offcanvas.Header >
-                    <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
-                    </Offcanvas.Header>
-                    <Offcanvas.Body className='profile-canvas-body'>
-                        {connectedUserDetails.userInfo &&
-                            <>
-                                <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
-                                <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
-                                <p>{connectedUserDetails.userInfo.name}</p>
-                                <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                                <Button className='send-message-button'>Send Message</Button>
-                                <hr style={{width:'90%'}}></hr>
-                                <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
-                                <Stack direction="horizontal" className='info-stack'>
-                                    <Stack className='info-block'> 
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.totalPosts}</p>
-                                        <p>Posts</p>
-                                    </Stack>
-                                    <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.connections}</p>
-                                        <p>Connections</p>
-                                    </Stack>
-                                    <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
-                                        <p>Experties</p>
-                                    </Stack>
-                                </Stack>
-                                {connectedUserDetails.media.length >  0 &&
-                                    <>
-                                        <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                                        <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
-                                            {connectedUserDetails.media.map((account)=>{
-                                                <Nav.Link >
-                                                    <Image  src={account.image}  className="social-media-img"  roundedCircle />
-                                                </Nav.Link>
-                                                
-                                            })}
-                                        </Stack>
-                                    </>
-                                }
-                                <hr style={{width:'90%'}}></hr>
-                                {connectedUserDetails.post.length >  0 && 
-                                    <>
-                                    <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
-                                    <ListGroup className='history-list'>
-                                        {connectedUserDetails.post.map((post)=>{
-                                            <ListGroup.Item as="li" className='activity-list-item'>
-                                                <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div> 
-                                                <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>                                            <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
-                                            </ListGroup.Item>
-                                        })}
-                                    </ListGroup>
-                                    </>
-                                }
-                            </>
-                        }
-                    </Offcanvas.Body>
-                </Offcanvas>
-                <Offcanvas show={showMessageCanvas} onHide={closeMessageCanvas} placement='end' style={{width:'30%'}}>
-                    <Offcanvas.Header>
-                        
-                            <Stack direction='horizontal'>
-                                <img src={currAvatar}style={{width:'12%', marginRight:'0.5vw'}}></img>
-                                <p style={{margin:0}}>{currName}<p style={{margin:0, fontWeight:'bold', fontSize:'small'}}>@{currUsername}</p></p>
-                            </Stack>
-                        
-                    </Offcanvas.Header>
-                    <hr style={{width:'100%', margin:'0'}}></hr>
-                    <Offcanvas.Body>
-                        <div>
-                            {allMessages.length > 0 && allMessages.map((message)=>{
-                                return(
-                                    message.senderId === connectedUserDetails.userInfo.id ?
-                                    <div className='received-msg'>
-                                        <p>{message.message}</p>
-                                    </div>
-                                    :
-                                    <div className='sent-msg'>
-                                        <p>{message.message}</p>
-                                    </div>
-                                );   
-                            })
-                            }
-                        </div>
-                        <Stack direction='horizontal' className='textarea-stack'>
-                        <Nav.Link onClick={()=>setShowOverlay(!showOverlay)} ref={target}>
-                            <span class="material-symbols-outlined icons" style={{fontSize:'1.5vw'}}>add</span>
-                        </Nav.Link>
-                        <Overlay target={target.current} show={showOverlay} placement="top">
-                            <Tooltip  >
-                                <Nav.Link className='tooltip-text'> Add reaction</Nav.Link> 
-                                
-                                <Nav.Link className='tooltip-text'> Attach File</Nav.Link>  
-                            </Tooltip>                     
-                        </Overlay>
-                        <TextareaAutosize  
-                            placeholder="Add your message here"  
-                            className='textarea-block '
-                            />
-                            <Nav.Link><span class="material-symbols-outlined icons" style={{fontSize:'1.5vw'}}>send</span></Nav.Link>
-                        </Stack>                 
-                    </Offcanvas.Body>
-                </Offcanvas>
+                <hr></hr>
+                <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
+                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
+                <ListGroup variant="flush" className='profile-channel-list'>
+                    {allPopularChannels.length > 0 && allPopularChannels.map((channel)=>(
+                         <ListGroup.Item className='channel-item'># • {channel.name}</ListGroup.Item>
+                    ))}
+                </ListGroup>
             </div>
             <div className='profile-div'>
                 <img src="1.png" style={{width:'7vw', margin:'1vw'}}></img>

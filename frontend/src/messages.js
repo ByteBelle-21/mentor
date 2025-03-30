@@ -25,7 +25,26 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 function Messages(){
 
     const location = useLocation();
-    const {username, userId, currUserId} = location.state || {};
+    const {userFromState} = location.state || {};
+
+    const[currUserDetails, setCurrUserDetails] = useState([]);
+    const getCurrUserDertails = async() =>{
+        const username  =  sessionStorage.getItem('session_user');
+        const data = { username };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
+            if (response.status === 200) {
+                setCurrUserDetails(response.data.userInfo);
+                setCurrUserId(response.data.userInfo.id);
+                console.log("Successfully retrieved current user details");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving current user details: ",error);
+        }
+    }
 
     const [connections, setConnections] =  useState([]);
     const getAllConnections = async(currUser) =>{
@@ -57,6 +76,7 @@ function Messages(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setConnectedUserDetails(response.data);
+                setSelectedUserId(response.data.userInfo.id);
                 console.log("Successfully retrieved connected  user details",connectedUserDetails);
                 openProfileCanvas();
             } 
@@ -68,8 +88,8 @@ function Messages(){
         }
     }
 
-    const [allMessages, setAllMessages] = useState([]);
 
+    const [allMessages, setAllMessages] = useState([]);
     useEffect(()=>{
         console.log("Successfully retrived all messages", allMessages);
     },[]);
@@ -96,12 +116,103 @@ function Messages(){
     }
 
 
+    const msgEmojiTarget =  useRef(null);
+    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
+    const msgTextAreaRef = useRef(null);
+    const [message, setMessage] = useState('');
+    const [showFileMsgPopover, setShowFileMsgPopover] =  useState(false);
+    const [msgFiles, setMsgFiles] =  useState([]);
+
+    const msgFileRef = useRef(null);
+    const msgFilePopoverTarget = useRef(null);
+
+    const handleFileInput =(event)=>{
+        const files = event.target.files;
+        if (files) {
+            setMsgFiles(prev =>[...prev,...Array.from(files)]);
+        }
+    }
+
+    const handleFileDelete =(fileName) =>{
+        if (msgFiles) {
+                setMsgFiles((prev) => prev.filter((file) => file.name !== fileName));  
+        }
+    }
+    useEffect(()=>{
+        if(msgFiles.length === 0){
+            setShowFileMsgPopover(false);
+        }  
+    },[msgFiles.length])
+
+
+    const handleMsgEmojiInput =(emoji) =>{
+        const cursor = msgTextAreaRef.current.selectionStart;
+        const newData = message.slice(0,cursor) + emoji.native + message.slice(cursor);
+        setMessage(newData);
+        msgTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
+        msgTextAreaRef.current.focus();
+    }
+
+    const handleNewMessage = async() =>{
+        if(!message ){
+            return;
+        }
+        const senderId = currUserId;
+        const receiverId = selectedUserId;
+        const requestData = { senderId,receiverId,message };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/addMessage`, requestData);
+            if (response.status === 200) {
+                console.log("Successfully added new message");
+                getAllMessages(userId);
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during adding new message: ",error);
+        }
+    }
+
+    const [selectedUser, setSelectedUser] = useState('');
+    const [currUserId, setCurrUserId] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState(0);
 
     useEffect(()=>{
-        getAllConnections(currUserId);
-        getConnectedUserDetails(username);
-        getAllMessages(userId);
-    })
+        getCurrUserDertails();
+    },[]);
+
+    useEffect(()=>{
+        if(currUserDetails){
+            getAllConnections(currUserDetails.id);
+        }
+        if(userFromState){
+            setSelectedUser(user);
+        }
+    },[currUserDetails]);
+
+    useEffect(()=>{
+        if(connections && connections.length > 0){
+            if(connections[0].username && !userFromState){
+                setSelectedUser(connections[0].username);
+            }
+        }
+    },[connections]);
+
+    useEffect(()=>{
+        if(selectedUser){
+            getConnectedUserDetails(selectedUser);
+        }
+    },[selectedUser]);
+
+    useEffect(()=>{
+        if(connectedUserDetails.userInfo){
+            getAllMessages(connectedUserDetails.userInfo.id);
+        }
+    },[connectedUserDetails]);
+
+
+
 
     const showPreview =(text, num)=>{
         const words = text.split(' ');
@@ -114,37 +225,97 @@ function Messages(){
                 <ListGroup variant="flush" className='channel-list' >
                     <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
                     {connections.length > 0 && connections.map((user)=>(
-                        <ListGroup.Item className='message-item'>
+                        <ListGroup.Item className='message-item' onClick={()=>setSelectedUser(user.username)}>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:'0'}}>{user.name}<p className="view-profile-button">{user.name}</p></p>
-                            <p className='ms-auto view-profile-button'>Message</p>
+                            <p style={{margin:'0'}}>{user.name}<p className="view-profile-button">{user.username}</p></p>
+                            <p className='ms-auto view-profile-button'>View Message</p>
                         </ListGroup.Item>
                     ))}
-                     <ListGroup.Item className='message-item'>
-                        <img src="/Avatars.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                        <p style={{margin:'0'}}>rgewrgw<p className="view-profile-button">rvwtertebtew</p></p>
-                        <p className='ms-auto view-profile-button'>View messages</p>
-                    </ListGroup.Item>
                 </ListGroup>
             </div>
-            <div className='large-container'>
-                  
-            {allMessages.length > 0 && allMessages.map((message)=>{
-                return(
-                    message.senderId === connectedUserDetails.userInfo.id ?
-                    <div className='received-msg'>
-                        <p>{message.message}</p>
-                    </div>
-                    :
-                    <div className='sent-msg'>
-                        <p>{message.message}</p>
-                    </div>
-                );   
-            })
-            }
+            <div className='messsage-large-container'>
+                <div className='message-container'>
+                    {allMessages.length > 0 && allMessages.map((message)=>{
+                        return(
+                            message.senderId === connectedUserDetails.userInfo.id ?
+                            <div className='received-msg'>
+                                <p>{message.message}</p>
+                            </div>
+                            :
+                            <div className='sent-msg'>
+                                <p>{message.message}</p>
+                            </div>
+                        );   
+                        })
+                    }
+                </div>
+                <div className='textarea-msg-block'>      
+                    {msgFiles.length > 0 &&
+                        <Nav.Link 
+                            className='ms-auto' style={{fontSize:'small', color:'white'}} 
+                            onClick={()=>setShowFileMsgPopover(!showFileMsgPopover)}
+                            ref={msgFilePopoverTarget}>
+                            <Badge bg="warning" text="dark">
+                                {msgFiles.length}
+                            </Badge>
+                        </Nav.Link>
+                    }
+
+                    <Overlay target={msgFilePopoverTarget} show={showFileMsgPopover} placement='top'>
+                        <Popover id="popover-basic"> 
+                            <ListGroup as="ol" numbered> 
+                            {msgFiles.length > 0 && msgFiles.map((file)=>(
+                                <ListGroup.Item
+                                as="li"
+                                className="d-flex justify-content-between align-items-start"
+                                >                                        
+                                    <div className="fw-bold">{file.name}</div>                                
+                                    <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, true, false, false)} >
+                                        <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
+                                    </Nav.Link>
+                                </ListGroup.Item>
+                            ))}     
+                            </ListGroup>
+                        </Popover>
+                    </Overlay>
+                    <Nav.Link className='file-link' 
+                        style={{color:'black', marginRight:'1vh', opacity:'70%'}} 
+                          onClick={() => msgFileRef.current.click()}
+                        >
+                        <span class="material-symbols-outlined">add</span>
+                    </Nav.Link> 
+                     <input 
+                        type='file' 
+                        style={{ display: 'none' }}
+                        ref={msgFileRef}
+                        onChange={(e) => handleFileInput(e)}
+                    />
+                     <Nav.Link 
+                        style={{color:'black', marginRight:'1vh', opacity:'70%'}} 
+                        ref={msgEmojiTarget} 
+                        onClick={()=> setShowMsgEmoji(!showMsgEmoji)}>
+                        <span class="material-symbols-outlined">add_reaction</span>
+                    </Nav.Link> 
+                    <Overlay target={msgEmojiTarget} show={showMsgEmoji} placement='top'>
+                        <Popover id="popover-basic">
+                            <Picker  onEmojiSelect={handleMsgEmojiInput} />
+                        </Popover>
+                    </Overlay>
+                    <TextareaAutosize  
+                        placeholder="Add your message here"  
+                        className='text-area-formcontrol' 
+                        ref = {msgTextAreaRef}
+                        onChange={(e)=>setMessage(e.target.value)}
+                        value={message}
+                    />
+
+                    <Nav.Link style={{color:'black', marginLeft:'1vh'}} className='text-area-links' onClick={()=>handleNewMessage} >
+                        <span class="material-symbols-outlined" >send</span>
+                    </Nav.Link> 
+               </div>
             </div>
             <div className='small-container'>
-            {connectedUserDetails.userInfo &&
+                {connectedUserDetails.userInfo &&
                     <>
                         <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
                         <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>

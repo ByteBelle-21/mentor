@@ -274,24 +274,7 @@
     flex-direction: row;
 }
 
-.sent-msg{
-    position: absolute;
-    width: 80%;
-    background-color:#e7eef1;
-    right: 0 !important;
-    padding: 0.5vw;
-    margin-bottom: 0.8vw;
-    border-radius: 0.5vw;
-}
 
-.received-msg{
-    width: 80%;
-    background-color:#c8ebfa;
-    left: 0 !important;
-    padding: 0.5vw;
-    margin-bottom: 0.8vw;
-    border-radius: 0.5vw;
-}
 
 .textarea-stack{
     position:absolute;

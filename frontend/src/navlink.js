@@ -31,7 +31,8 @@ function Navlink({removeAccess}){
             <Stack direction='horizontal' className='second-navbar' style={{alignItems:'center', height:'6vh'}}>
                 <span class="material-symbols-outlined icons" style={{fontSize:'2vw', margin:'0', padding:'0', color:'#f86714'}}>groups</span>
                 <Nav.Link style={{fontFamily:'Spicy Rice', fontSize:'1.4vw', margin:'0', paddingLeft:'0.3vw', color:'#fc0380'}}>AskMentor</Nav.Link >
-                <Nav.Link  className='ms-auto' style={{ margin:'0',paddingLeft:'4vw', fontWeight:'bold'}} onClick={()=> navigateTo('/channels')}>Channels & Messages</Nav.Link >
+                <Nav.Link  className='ms-auto' style={{ margin:'0',paddingLeft:'4vw', fontWeight:'bold'}} onClick={()=> navigateTo('/channels')}>Channels</Nav.Link >
+                <Nav.Link  style={{ margin:'0',paddingLeft:'2vw', fontWeight:'bold'}} onClick={()=> navigateTo('/messages')}>Messages</Nav.Link >
                 <Nav.Link  style={{ margin:'0', paddingLeft:'2vw', fontWeight:'bold'}} onClick={()=> navigateTo('/profile')}>Profile</Nav.Link >
                 <Nav.Link  style={{ margin:'0', paddingLeft:'2vw',paddingRight:'2vw', fontWeight:'bold'}} onClick={openSearchModal}>Search</Nav.Link >
                 <Modal
