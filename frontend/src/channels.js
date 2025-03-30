@@ -20,14 +20,21 @@ import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
+import {useLocation } from 'react-router-dom';
 
 function Channels(){
 
     const navigateTo = useNavigate();
+    const location = useLocation();
+    const {channelFromState} = location.state || {};
+
 
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
+        if(channelFromState){
+            setChannel(channelFromState);
+        }
     },[]);
 
 

@@ -54,6 +54,21 @@
     transform: scale(1.05);
 }
 
+.save-changes-btn{
+    color:#18bba5;
+    border-color: #18bba5;
+    background-color: transparent;
+    font-weight: bold;
+}
+
+.save-changes-btn:hover{
+    color:#18bba5;
+    border-color: #18bba5;
+    background-color: transparent;
+    font-weight: bold;
+    transform: scale(1.05);
+}
+
 .social-media-block{
     margin-top: 2vw;
     width: 90%;
