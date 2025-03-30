@@ -687,11 +687,13 @@ app.post('/addMedia',(request, response)=>{
     db.query(`INSERT INTO postForum.mediaTable(
               userId,
               type,
-              link
-            ) VALUES (?,?,?)`,
+              link,
+              image
+            ) VALUES (?,?,?,?)`,
             [ request.body.userId,
               request.body.type,
               request.body.link,
+              request.body.image
             ],error=>{
                 if(error){
                     response.status(500).send("Server error during adding new media");
@@ -712,6 +714,8 @@ app.post('/removeMedia',(request, response)=>{
                 response.status(200).send("Successfully deleted media");
             })
 })
+
+
 
 
 
