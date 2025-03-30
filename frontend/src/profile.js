@@ -14,6 +14,8 @@ import Overlay from 'react-bootstrap/Overlay';
 import Tooltip from 'react-bootstrap/Tooltip';
 import TextareaAutosize from 'react-textarea-autosize';
 import Image from 'react-bootstrap/Image';
+import axios from 'axios';
+import {useLocation } from 'react-router-dom';
 
 function Profile(){
     useEffect(()=>{
@@ -68,7 +70,25 @@ function Profile(){
         }
     }
 
-    const [connectedUserDetails, setConnectedUserDetails] =  useState([]);
+
+
+    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
+
+    const openProfileCanvas =()=>{
+        setShowProfileCanvas(true);
+    }
+
+    const closeProfileCanvas = ()=>{
+        setShowProfileCanvas(false);
+    }
+
+    const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
+
+    useEffect(()=>{
+        console.log("connected users details is ", connectedUserDetails.userInfo);
+    },[showProfileCanvas]);
+
+    
     const getConnectedUserDetails = async(user) =>{
         const username  =  user;
         const data = { username };
@@ -76,8 +96,8 @@ function Profile(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setConnectedUserDetails(response.data);
+                console.log("Successfully retrieved connected  user details",connectedUserDetails);
                 openProfileCanvas();
-                console.log("Successfully retrieved connected  user details");
             } 
             else{
                 console.log(response.message)
@@ -87,17 +107,6 @@ function Profile(){
         }
     }
 
-
-    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
-
-    const openProfileCanvas =()=>{
-        closeMessageCanvas();
-        setShowProfileCanvas(true);
-    }
-
-    const closeProfileCanvas = ()=>{
-        setShowProfileCanvas(false);
-    }
 
     const [showMessageCanvas, setShowMessageCanvas] = useState(false); 
 
@@ -110,10 +119,45 @@ function Profile(){
         setShowMessageCanvas(false);
     }
 
+    const [currUsername, setCurrUsername] = useState('');
+    const [currName, setCurrName] = useState('');
+    const [currAvatar, setCurrAvatar] = useState('');
+    const [allMessages, setAllMessages] = useState([]);
+
+    useEffect(()=>{
+        console.log("Successfully retrived all messages", allMessages);
+    },[showMessageCanvas]);
+
+    const getAllMessages = async(connectedUserId) =>{ 
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/getAllMessages`, {
+                params:{
+                    currUser: sessionStorage.getItem('session_user') ,
+                    otherUser : connectedUserId
+                }
+            });
+            if (response.status === 200) {
+                setAllMessages(response.data);
+                console.log("Successfully retrieved all messages",setAllMessages);
+                openMessageCanvas();
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving all messages: ",error);
+        }
+    }
+
 
     const [showOverlay, setShowOverlay] = useState(false); 
     const target = useRef(null);
 
+
+    const showPreview =(text, num)=>{
+        const words = text.split(' ');
+        return words.slice(0, num).join(' ')+" . . . . . . . .";
+    }
 
 
     return(
@@ -125,78 +169,101 @@ function Profile(){
                             <ListGroup.Item className='message-item'>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getConnectedUserDetails(user.username)}>View Profile</p></p>
-                            <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
+                            <p className='ms-auto view-profile-button' 
+                                onClick={()=>{
+                                    setCurrAvatar(user.avatar),
+                                    setCurrName(user.name),
+                                    setCurrUsername(user.username)
+                                    getAllMessages(user.id, user.username)}
+                                
+                                }>Message</p>
                         </ListGroup.Item>
                     ))}
-                        <ListGroup.Item className='message-item'>
-                            <img src="1.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:'0'}}>name jr<p className="view-profile-button" onClick={openProfileCanvas}>View Profile</p></p>
-                            <p className='ms-auto view-profile-button' onClick={openMessageCanvas}>Message</p>
-                        </ListGroup.Item>
                 </ListGroup>
                 <Offcanvas show={showProfileCanvas} onHide={closeProfileCanvas} placement='end'>
                     <Offcanvas.Header >
                     <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
                     </Offcanvas.Header>
                     <Offcanvas.Body className='profile-canvas-body'>
-                        <img src="Group301.png" className='canvas-img'></img>
-                        <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
-                        <p>{connectedUserDetails.userInfo.name}</p>
-                        <p>hellp {currUserDetails.username}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                        <Button className='send-message-button'>Send Message</Button>
-                        <hr style={{width:'90%'}}></hr>
-                        <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
-                        <Stack direction="horizontal" className='info-stack'>
-                            <Stack className='info-block'> 
-                                <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.totalPosts}</p>
-                                <p>Posts</p>
-                            </Stack>
-                            <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.connections}</p>
-                                <p>Connections</p>
-                            </Stack>
-                            <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
-                                <p>Experties</p>
-                            </Stack>
-                        </Stack>
-                        <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                        <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
-                            {connectedUserDetails.media.length >  0 && connectedUserDetails.media.map((account)=>{
-                                <Nav.Link >
-                                    <Image  src={account.image}  className="social-media-img"  roundedCircle />
-                                </Nav.Link>
-                            })}
-                        </Stack>
-                        <hr style={{width:'90%'}}></hr>
-                        <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
-                        <ListGroup className='history-list'>
-                            {connectedUserDetails.post.length > 0 && connectedUserDetails.post.map((eachPost)=>{
-                                <ListGroup.Item as="li" className='activity-list-item'>
-                                    <div className="fw-bold" style={{color:'#d84434'}}>kekr </div>
-                                    <p style={{fontSize:'small'}} >mwjhfgwqhf wkfr kjwbfj fjh .......</p>
-                                </ListGroup.Item>
-                            })}
-                        </ListGroup>
+                        {connectedUserDetails.userInfo &&
+                            <>
+                                <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
+                                <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
+                                <p>{connectedUserDetails.userInfo.name}</p>
+                                <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
+                                <Button className='send-message-button'>Send Message</Button>
+                                <hr style={{width:'90%'}}></hr>
+                                <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
+                                <Stack direction="horizontal" className='info-stack'>
+                                    <Stack className='info-block'> 
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.totalPosts}</p>
+                                        <p>Posts</p>
+                                    </Stack>
+                                    <Stack className='info-block'>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.connections}</p>
+                                        <p>Connections</p>
+                                    </Stack>
+                                    <Stack className='info-block'>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                        <p>Experties</p>
+                                    </Stack>
+                                </Stack>
+                                {connectedUserDetails.media.length >  0 &&
+                                    <>
+                                        <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
+                                        <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
+                                            {connectedUserDetails.media.map((account)=>{
+                                                <Nav.Link >
+                                                    <Image  src={account.image}  className="social-media-img"  roundedCircle />
+                                                </Nav.Link>
+                                                
+                                            })}
+                                        </Stack>
+                                    </>
+                                }
+                                <hr style={{width:'90%'}}></hr>
+                                {connectedUserDetails.post.length >  0 && 
+                                    <>
+                                    <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
+                                    <ListGroup className='history-list'>
+                                        {connectedUserDetails.post.map((post)=>{
+                                            <ListGroup.Item as="li" className='activity-list-item'>
+                                                <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div> 
+                                                <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>                                            <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
+                                            </ListGroup.Item>
+                                        })}
+                                    </ListGroup>
+                                    </>
+                                }
+                            </>
+                        }
                     </Offcanvas.Body>
                 </Offcanvas>
                 <Offcanvas show={showMessageCanvas} onHide={closeMessageCanvas} placement='end' style={{width:'30%'}}>
                     <Offcanvas.Header>
-                        <Stack direction='horizontal'>
-                            <img src='Group301.png' style={{width:'12%', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:0}}>user name here<p style={{margin:0, fontWeight:'bold', fontSize:'small'}}>@username</p></p>
-                        </Stack>
+                        
+                            <Stack direction='horizontal'>
+                                <img src={currAvatar}style={{width:'12%', marginRight:'0.5vw'}}></img>
+                                <p style={{margin:0}}>{currName}<p style={{margin:0, fontWeight:'bold', fontSize:'small'}}>@{currUsername}</p></p>
+                            </Stack>
+                        
                     </Offcanvas.Header>
                     <hr style={{width:'100%', margin:'0'}}></hr>
                     <Offcanvas.Body>
                         <div>
-                            <div className='received-msg'>
-                                <p>jhjehfjh</p>
-                            </div>
-                            <div className='sent-msg'>
-                                <p>jhfbjehfjhe</p>
-                            </div>
-
+                            {allMessages.length > 0 && allMessages.map((message)=>{
+                                return(
+                                    message.senderId === connectedUserDetails.userInfo.id ?
+                                    <div className='received-msg'>
+                                        <p>{message.message}</p>
+                                    </div>
+                                    :
+                                    <div className='sent-msg'>
+                                        <p>{message.message}</p>
+                                    </div>
+                                );   
+                            })
+                            }
                         </div>
                         <Stack direction='horizontal' className='textarea-stack'>
                         <Nav.Link onClick={()=>setShowOverlay(!showOverlay)} ref={target}>

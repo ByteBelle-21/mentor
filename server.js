@@ -319,13 +319,20 @@ app.get('/getConnectedUsers',(request,response)=>{
 
 // Retrive messages between current login user and selected user
 app.get('/getAllMessages',(request,response)=>{
-    db.query(`SELECT * FROM postForum.messageTables 
+    db.query(`SELECT id FROM postForum.userTable WHERE username = ? ` ,[request.query.currUser],(error, result)=>{
+        if(error){
+            console.log("error1" ,error);
+            response.status(500).send("Server error during retriving id of current user for getting all messages");
+            return;
+        }
+        db.query(`SELECT * FROM postForum.messageTable
               WHERE senderId=? AND receiverId=? 
               OR senderId=? AND receiverId=? 
               ORDER BY datetime`,
-              [request.body.currUser, request.body.otherUser, request.body.otherUser,request.body.currUser],
+              [result[0].id, request.query.otherUser, request.query.otherUser,result[0].id],
               (error, messageResult)=>{
                 if(error){
+                    console.log("error2" ,error);
                     response.status(500).send("Server error during retriving all messages");
                     return;
                 }
@@ -346,9 +353,12 @@ app.get('/getAllMessages',(request,response)=>{
                     response.status(200).json(messagesWithFiles);
                 })
                 .catch(error=>{
+                    console.log("error3" ,error);
                     response.status(500).send("Server error during retriving all messages with their files");
                 })
             })
+    })
+    
 })
 
 

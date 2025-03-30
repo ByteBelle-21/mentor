@@ -1,0 +1,8 @@
+.message-page{
+    display: flex;
+    flex-direction: row;
+    justify-content:space-between;
+    padding: 1vw;
+    background-color: #e7eef1;
+    height: 94vh;
+}

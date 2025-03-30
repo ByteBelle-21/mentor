@@ -3,6 +3,7 @@ import Homepage from './homepage';
 import Channels from './channels';
 import Navlink from './navlink';
 import Profile from './profile';
+import Messages from './messages';
 import { Navigate } from 'react-router-dom'; 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/" element={<Homepage  giveAccess={authenticate}/>}/>
                 <Route path="/channels" element={ access ? <Channels/> : <Navigate to="/"/>}/>
                 <Route path="/profile" element={access ? <Profile/> :<Navigate to="/"/> }/>
+                <Route path="/messages" element={access ? <Messages/> : <Navigate to="/" />} />
             </Routes>
             </Router>
         </>

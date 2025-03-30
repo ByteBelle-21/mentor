@@ -138,21 +138,21 @@ function Channels(){
         setShowProfileCanvas(false);
     }
 
-    const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
+    const [selectedUserDetails, setselectedUserDetails ] = useState([]);
 
     useEffect(()=>{
-        console.log("connected users details is ", connectedUserDetails.userInfo);
+        console.log("connected users details is ", selectedUserDetails.userInfo);
     },[showProfileCanvas]);
 
     
-    const getConnectedUserDetails = async(user) =>{
+    const getselectedUserDetails = async(user) =>{
         const username  =  user;
         const data = { username };
         try {
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
-                setConnectedUserDetails(response.data);
-                console.log("Successfully retrieved connected  user details",connectedUserDetails);
+                setselectedUserDetails(response.data);
+                console.log("Successfully retrieved connected  user details",selectedUserDetails);
                 openProfileCanvas();
             } 
             else{
@@ -409,8 +409,17 @@ function Channels(){
     }
 
 
-    return(
+    const openCanvasOnOtherPage = (avatar,username, name, userId)=>{
+        const params = {
+            avatar : avatar,
+            username: username,
+            name : name,
+            userId:userId
+        }
+        navigateTo('/profile',{state:params});
+    }
 
+    return(
        <div className="channel-page">
             <Modal
                 show={showChannelModal} 
@@ -921,8 +930,8 @@ function Channels(){
                         {popularUsers.length > 0 && popularUsers.map((user)=>(
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                                <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getConnectedUserDetails(user.username)}>View Profile</p></p>
-                                <p className='ms-auto view-profile-button' >Message</p>
+                                <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getselectedUserDetails(user.username)}>View Profile</p></p>
+                                <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.avatar, user.username, user.name, user.id)} >Message</p>
                             </ListGroup.Item>
                         ))}
                     </ListGroup>
@@ -931,22 +940,22 @@ function Channels(){
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
                         </Offcanvas.Header>
                         <Offcanvas.Body className='profile-canvas-body'>
-                            {connectedUserDetails.userInfo &&
+                            {selectedUserDetails.userInfo &&
                             <>
-                                <img src={connectedUserDetails.userInfo.avatar} className='canvas-img'></img>
-                                <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
-                                <p>{connectedUserDetails.userInfo.name}</p>
-                                <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
+                                <img src={selectedUserDetails.userInfo.avatar} className='canvas-img'></img>
+                                <p style={{fontWeight:'bold', margin:'0'}}>@{selectedUserDetails.userInfo.username}</p>
+                                <p>{selectedUserDetails.userInfo.name}</p>
+                                <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {selectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
                                 <Button className='send-message-button'>Send Message</Button>
                                 <hr style={{width:'90%'}}></hr>
                                 <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
                                 <Stack direction="horizontal" className='info-stack'>
                                     <Stack className='info-block'> 
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.totalPosts}</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{selectedUserDetails.userInfo.totalPosts}</p>
                                         <p>Posts</p>
                                     </Stack>
                                     <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.connections}</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{selectedUserDetails.userInfo.connections}</p>
                                         <p>Connections</p>
                                     </Stack>
                                     <Stack className='info-block'>
@@ -954,11 +963,11 @@ function Channels(){
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>
-                                {connectedUserDetails.media.length >  0 &&
+                                {selectedUserDetails.media.length >  0 &&
                                     <>
                                         <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
                                         <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
-                                            {connectedUserDetails.media.map((account)=>{
+                                            {selectedUserDetails.media.map((account)=>{
                                                 <Nav.Link >
                                                     <Image  src={account.image}  className="social-media-img"  roundedCircle />
                                                 </Nav.Link>
@@ -968,14 +977,14 @@ function Channels(){
                                     </>
                                 }
                                 <hr style={{width:'90%'}}></hr>
-                                {connectedUserDetails.post.length >  0 && 
+                                {selectedUserDetails.post.length >  0 && 
                                     <>
                                     <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
                                     <ListGroup className='history-list'>
-                                        {connectedUserDetails.post.map((post)=>{
+                                        {selectedUserDetails.post.map((post)=>{
                                             <ListGroup.Item as="li" className='activity-list-item'>
                                                 <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
->                                                <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
+                                                <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
                                             </ListGroup.Item>
                                         })}
                                     </ListGroup>
