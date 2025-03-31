@@ -10,9 +10,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import Image from 'react-bootstrap/Image';
 import Nav from 'react-bootstrap/Nav';
-import TextareaAutosize from 'react-textarea-autosize';
 import Overlay from 'react-bootstrap/Overlay';
-import Tooltip from 'react-bootstrap/Tooltip';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -24,11 +22,69 @@ import {useLocation } from 'react-router-dom';
 
 function Channels(){
 
+    // Variables for navigation purpose
     const navigateTo = useNavigate();
     const location = useLocation();
     const { channelFromState, postFromState } = location?.state || {};
 
+    //Variables for emoji popover open which shows emoji panel
+    const topicEmojiTarget = useRef(null);
+    const postEmojiTarget = useRef(null);
+    const replyEmojiTarget = useRef(null);
+    const [showTopicEmoji, setShowTopicEmoji] = useState(false);
+    const [showPostEmoji, setShowPostEmoji] = useState(false);
+    const [showReplyEmoji, setShowReplyEmoji] = useState(false);
 
+    // Variables for textarea reference used to refer textarea
+    const topicTextAreaRef = useRef(null);
+    const dataTextAreaRef = useRef(null);
+    const replyTextAreaRef = useRef(null);
+
+    // Variables for file popover open which shows included files 
+    const replyFilePopoverTarget = useRef(null);
+    const postFilePopoverTarget = useRef(null);
+    const [showFilePopover, setShowFilePopover] = useState(false);
+    const [showFileReplyPopover, setShowFileReplyPopover] =  useState(false);
+
+    // Variables to store all channels information , selected channel's details as well
+    // as user input for creating new channel
+    const [allChannels, setAllChannels] = useState([]);
+    const [channel, setChannel] = useState("Homepage");
+    const [currChannelId, setCurrChannelId] = useState(0);
+    const [currentChannelDetails, setCurrentChannelDetails] = useState([]);
+    const [showChannelModal, setShowChannelModal] = useState(false);
+    const [channelName, setChannelName] = useState('');
+    const [channelError, setChannelError] = useState(false);
+    const [channel401Error, setChannel401Error] = useState(false);
+    const [channel500Error, setChannel500Error] = useState(false);
+
+    // Variables to store user input for creating new post as well as opening post creating form
+    const [showPostModal, setShowPostModal] = useState(false);
+    const [topic, setTopic] = useState('');
+    const [data, setData] = useState('');
+    const [reply, setReply] =  useState('');
+    const [files, setFiles] = useState([]);
+    const [post500Error, setPost500Error] = useState(false);
+    const [postError, setPostError] = useState(false);
+
+    // Variables to store current user's details as well as current user's connections, 
+    // and connected person's details
+    const[currUserDetails, setCurrUserDetails] = useState([]);
+    const [connections, setConnections] =  useState([]);
+    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
+    const [selectedUserDetails, setselectedUserDetails ] = useState([]);
+
+    // Variables to store user inputs to reply for post, as well as 
+    // to open comment box for reply
+    const [replyFiles, setReplyFiles] = useState([]);
+    const fileReplyRef = useRef(null);
+    const [showCommentInput, setShowCommentInput] = useState(0);
+    
+
+    /**
+     * Functionality to retrive all details about current logged in user
+     * as well as retrieve all channels, or go to searched post 
+     */
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
@@ -43,9 +99,8 @@ function Channels(){
         }
     },[]);
 
-
-
-    const [allChannels, setAllChannels] = useState([]);
+    
+    // Functionality to retrive all channels
     const getAllChannels = async() =>{
         try {
             const response =  await axios.get(`${window.BASE_URL}/getAllChannels`);
@@ -61,43 +116,7 @@ function Channels(){
         }
     }
 
-
-   
-    const [channel, setChannel] = useState("Homepage");
-    const [currChannelId, setCurrChannelId] = useState(0);
-    const [currentChannelDetails, setCurrentChannelDetails] = useState([]);
-
-    const handleChannelSelection = async (channelId, channelName) =>{
-        setChannel(channelName);
-        setCurrChannelId(channelId);
-        try {
-            const response = await axios.get(`${window.BASE_URL}/getChannelPosts`,
-            { params: {channel:channelId}});
-            if (response.status === 200) {
-                setCurrentChannelDetails(response.data);
-                console.log(response.data);
-            } 
-            else if(response.status === 401){
-                console.log(response.message)
-            }
-        } catch (error){
-            console.error("Catched axios error during retriving channel post: ",error);
-        }
-    }
-
-
-    
-    const [showCommentInput, setShowCommentInput] = useState(0);
-
-    const closeCommentInput = () =>{
-        setReply('');
-        setReplyFiles([]);
-        setShowFileReplyPopover(false);
-        setShowCommentInput(0);
-    }
-
-
-    const[currUserDetails, setCurrUserDetails] = useState([]);
+    // Functionality to retrieve logged in user's details
     const getCurrUserDertails = async() =>{
         const username  =  sessionStorage.getItem('session_user');
         const data = { username };
@@ -116,7 +135,33 @@ function Channels(){
         }
     }
 
-    const [connections, setConnections] =  useState([]);
+    // Functionality to retrieve current logged in user's expertise
+
+    const getExpertise = async(currPosts) =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
+            if (response.status === 200) {
+                const score = (currPosts/response.data)*100;
+                let result = "";
+                if( score < 30 ){
+                    result = 'Begginer';
+                }
+                else if(score >= 30 && score < 60){
+                    result = 'Proficient';
+                }
+                else{
+                    result = 'Expert';
+                }       
+                console.log("Successfully got exertise");
+                return result;
+            } 
+        } catch (error) {
+            console.error("Catched axios error during retriving expertise : ",error);
+            return null;
+        }
+    }
+
+    // Functionality to retrive all user's who are conncted to logged in user
     const getAllConnections = async(currUser) =>{
         try {
             const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUser}});
@@ -132,51 +177,26 @@ function Channels(){
         }
     }
 
-
-
-    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
-
-    const openProfileCanvas =()=>{
-        setShowProfileCanvas(true);
-    }
-
-    const closeProfileCanvas = ()=>{
-        setShowProfileCanvas(false);
-    }
-
-    const [selectedUserDetails, setselectedUserDetails ] = useState([]);
-
-    useEffect(()=>{
-        console.log("connected users details is ", selectedUserDetails.userInfo);
-    },[showProfileCanvas]);
-
-    
-    const getselectedUserDetails = async(user) =>{
-        const username  =  user;
-        const data = { username };
+    // Functionality to retrive all posts for current channel
+    const handleChannelSelection = async (channelId, channelName) =>{
+        setChannel(channelName);
+        setCurrChannelId(channelId);
         try {
-            const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
+            const response = await axios.get(`${window.BASE_URL}/getChannelPosts`,
+            { params: {channel:channelId}});
             if (response.status === 200) {
-                setselectedUserDetails(response.data);
-                console.log("Successfully retrieved connected  user details",selectedUserDetails);
-                openProfileCanvas();
+                setCurrentChannelDetails(response.data);
+                console.log(response.data);
             } 
-            else{
+            else if(response.status === 401){
                 console.log(response.message)
             }
-        } catch (error) {
-            console.error("Catched axios error during retriving connected user details: ",error);
+        } catch (error){
+            console.error("Catched axios error during retriving channel post: ",error);
         }
     }
 
-   
-
-    const [showChannelModal, setShowChannelModal] = useState(false);
-    const [channelName, setChannelName] = useState('');
-    const [channelError, setChannelError] = useState(false);
-    const [channel401Error, setChannel401Error] = useState(false);
-    const [channel500Error, setChannel500Error] = useState(false);
-
+    // Functionality to open or close channel creation form
     const openChannelModal =()=>{
         setShowChannelModal(true);
     }
@@ -192,6 +212,8 @@ function Channels(){
         setChannelError(false);
     }
 
+
+    // Functionality to add new channel 
     const addChannel= async()=>{
         if(!channelName){
             setChannelError(true);
@@ -216,51 +238,7 @@ function Channels(){
     }
 
 
-    const [showPostModal, setShowPostModal] = useState(false);
-
-    const topicEmojiTarget = useRef(null);
-    const postEmojiTarget = useRef(null);
-    const replyEmojiTarget = useRef(null);
-    const msgEmojiTarget =  useRef(null);
-
-    const [showTopicEmoji, setShowTopicEmoji] = useState(false);
-    const [showPostEmoji, setShowPostEmoji] = useState(false);
-    const [showReplyEmoji, setShowReplyEmoji] = useState(false);
-    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
-   
-    const topicTextAreaRef = useRef(null);
-    const dataTextAreaRef = useRef(null);
-    const replyTextAreaRef = useRef(null);
-    const msgTextAreaRef = useRef(null);
-  
-    const [topic, setTopic] = useState('');
-    const [data, setData] = useState('');
-    const [reply, setReply] =  useState('');
-    const [message, setMessage] = useState('');
-
-    const [showFilePopover, setShowFilePopover] = useState(false);
-    const [showFileReplyPopover, setShowFileReplyPopover] =  useState(false);
-    const [showFileMsgPopover, setShowFileMsgPopover] =  useState(false);
-
-    const [files, setFiles] = useState([]);
-    const [replyFiles, setReplyFiles] = useState([]);
-    const [msgFiles, setMsgFiles] =  useState([]);
-
-    const replyFilePopoverTarget = useRef(null);
-    const postFilePopoverTarget = useRef(null);
-  
-    const [post500Error, setPost500Error] = useState(false);
-    const [postError, setPostError] = useState(false);
-    
-    const fileReplyRef = useRef(null);
-   
-    
-
-    const closePostErrors = () =>{
-        setPostError(false);
-        setPost500Error(false);
-    }
-    
+    // Functionality to open/close post creation form
     const openPostModal =()=>{
         setShowPostModal(true);
     }
@@ -276,6 +254,12 @@ function Channels(){
         setShowPostModal(false);
     }
 
+    const closePostErrors = () =>{
+        setPostError(false);
+        setPost500Error(false);
+    }
+
+    // Functionality to open/close emoji panels to include emoji with post's topic or data
     const clickTopicEmoji = ()=>{
         setShowPostEmoji(false);
         setShowFilePopover(false);
@@ -288,12 +272,15 @@ function Channels(){
         setShowPostEmoji(!showPostEmoji);
     }
 
+    // Functonality to open/close file popover which shows selected files
     const clickFilePopover = ()=>{
         setShowTopicEmoji(false);
         setShowPostEmoji(false);
         setShowFilePopover(!showFilePopover);
     }
 
+
+    // Functionality to include emoji in post's topic or data or reply
     const handleTopicEmojiInput =(emoji) =>{
         const cursor = topicTextAreaRef.current.selectionStart;
         const newTopic = topic.slice(0,cursor) + emoji.native + topic.slice(cursor);
@@ -310,7 +297,6 @@ function Channels(){
         dataTextAreaRef.current.focus();
     }
 
-
     const handleReplyEmojiInput =(emoji) =>{
         const cursor = replyTextAreaRef.current.selectionStart;
         const newData = reply.slice(0,cursor) + emoji.native + reply.slice(cursor);
@@ -320,8 +306,8 @@ function Channels(){
     }
 
    
-
-    const handleFileInput =(event, isPost, isReply, isMsg)=>{
+    // Functionality to include/remove file for post or reply to post
+    const handleFileInput =(event, isPost, isReply)=>{
         const files = event.target.files;
         if (files) {
             if(isPost){
@@ -330,13 +316,10 @@ function Channels(){
             else if(isReply){
                 setReplyFiles(prev =>[...prev,...Array.from(files)]);
             }
-            else if(isMsg){
-                setMsgFiles(prev =>[...prev,...Array.from(files)]);
-            }
         }
     }
 
-    const handleFileDelete =(fileName, isPost, isReply, isMsg) =>{
+    const handleFileDelete =(fileName, isPost, isReply) =>{
          if (files) {
             if(isPost){
                 setFiles((prev) => prev.filter((file) => file.name !== fileName));
@@ -350,16 +333,19 @@ function Channels(){
                     setShowFileReplyPopover(false);
                 }
             }
-            else if(isMsg){
-                setMsgFiles((prev) => prev.filter((file) => file.name !== fileName));
-                if(msgFiles.length === 0){
-                    setShowFileMsgPopover(false);
-                }
-            }
+            
         }
     }
 
+    // Functionality to close textarea to input reply to post
+    const closeCommentInput = () =>{
+        setReply('');
+        setReplyFiles([]);
+        setShowFileReplyPopover(false);
+        setShowCommentInput(0);
+    }
 
+    // Functionality to add new post, new reply to post and selected files for the post/reply
     const handleNewPost = async() =>{
         if(!topic || !data ){
             setPostError(true);
@@ -373,6 +359,7 @@ function Channels(){
             const response =  await axios.post(`${window.BASE_URL}/addPost`, requestData);
             if (response.status === 200) {
                 closePostModal();
+                handleFileUpload(response.data.postId,true,false);
                 handleChannelSelection(channelId, channel);
                 console.log("Successfully added new post");
             } 
@@ -383,7 +370,7 @@ function Channels(){
             console.error("Catched axios error during adding new post: ",error);
         }
     }
-
+    
     const handleNewReply = async(replyToPost) =>{
         if(!reply){
             return;
@@ -397,6 +384,8 @@ function Channels(){
             const response =  await axios.post(`${window.BASE_URL}/addPost`, requestData);
             if (response.status === 200) {
                 closeCommentInput();
+                handleFileUpload(response.data.postId,false,true);
+                handleChannelSelection(channelId, channel);
                 console.log("Successfully added new reply");
             } 
             else{
@@ -407,21 +396,83 @@ function Channels(){
         }
     }
 
+    const handleFileUpload = async (postId,isPost, isReply)=>{
+        if (isPost && files.length === 0){
+            return;
+        }
+        else if(isReply && replyFiles.length === 0){
+            return;
+        }
 
-    const showPreview =(text, num)=>{
-        const words = text.split(' ');
-        return words.slice(0, num).join(' ')+" . . . . . . . .";
+        const formData = new FormData();
+        formData.append('postId',postId);
+        if(isPost){
+            files.forEach((file)=>{
+                formData.append('allFiles',file)
+            });
+        }
+        else{
+            replyFiles.forEach((file)=>{
+                formData.append('allFiles',file)
+            });
+        }
+        try {
+            const response = await axios.post(`${window.BASE_URL}/uploadFiles`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            if (response.status === 200) {
+                setFiles([]);
+                setReplyFiles([]);
+                console.log("Files uploaded successfully");
+            }
+        } catch (error) {
+            console.error("Error while uploading files:", error);
+        }
     }
 
 
-    const openCanvasOnOtherPage = (username)=>{
+    // Functionality to like or dislike post/reply
+    const handlePostLike = async(post) =>{
+        const postId = post;
+        const data = {postId};
+        try {
+            const response = await axios.post(`${window.BASE_URL}/likePost`, data);
+            if (response.status === 200) {
+                console.log("Liked post successfully");
+                handleChannelSelection(response.data.channelId,response.data.channelName);
+            }
+        } catch (error) {
+            console.error("Error liking post:", error);
+        }
+    }
+
+    const handlePostDislike = async(post) =>{
+        const postId = post;
+        const data = {postId};
+        try {
+            const response = await axios.post(`${window.BASE_URL}/dislikePost`, data);
+            if (response.status === 200) {
+                console.log("Disliked post successfully");
+                handleChannelSelection(response.data.channelId,response.data.channelName);
+            }
+        } catch (error) {
+            console.error("Error disliking post:", error);
+        }
+    }
+
+
+    // Functionallity to navigate to message page and open selected user's profile
+    const goToSelectedUserPage = (username)=>{
         const params = {
             userFromState: username,
         }
-        navigateTo('/profile',{state:params});
+        navigateTo('/messages',{state:params});
     }
 
 
+    // Functionality to navigate to channel page and go to searched post
     const goToSearchedPost =(channel, postId) =>{
         closeSearchModal();
         const params = {
@@ -431,6 +482,54 @@ function Channels(){
         navigateTo('/channels',{state:params});
     }
 
+
+    // Functionality to show preview of long post
+    const showPreview =(text, num)=>{
+        const words = text.split(' ');
+        return words.slice(0, num).join(' ')+" . . . . . . . .";
+    }
+    
+
+    // Funcationality to create URL for file
+    const createURL = (fileData, fileType) =>{
+        const file = new Uint8Array(fileData.data);
+        const blob = new Blob([file], { type: fileType });
+        return URL.createObjectURL(blob);
+    }
+
+
+    // Functionality to opne/close canvas to show selected user's details
+    // and retrieve the selected user's details
+    const openProfileCanvas =()=>{
+        setShowProfileCanvas(true);
+    }
+
+    const closeProfileCanvas = ()=>{
+        setShowProfileCanvas(false);
+    }
+
+    useEffect(()=>{
+        console.log("connected users details is ", selectedUserDetails.userInfo);
+    },[showProfileCanvas]);
+
+    
+    const getselectedUserDetails = async(user) =>{
+        const username  =  user;
+        const data = { username };
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
+            if (response.status === 200) {
+                setselectedUserDetails(response.data);
+                console.log("Successfully retrieved connected  user details",selectedUserDetails);
+                openProfileCanvas();
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during retriving connected user details: ",error);
+        }
+    }
 
     return(
        <div className="channel-page">
@@ -564,7 +663,7 @@ function Channels(){
                                 type="file" 
                                 multiple 
                                 style={{borderColor:'#dedb85', marginRight:'0.5vw'}} 
-                                onChange={(e) => handleFileInput(e, true, false, false)}
+                                onChange={(e) => handleFileInput(e, true, false)}
                             />
                             <Nav.Link onClick={()=>{ if(files.length > 0) clickFilePopover();}} ref={postFilePopoverTarget}>
                                 <Badge pill bg="success">
@@ -580,7 +679,7 @@ function Channels(){
                                             className="d-flex justify-content-between align-items-start"
                                             >                                        
                                                 <div className="fw-bold">{file.name}</div>                                
-                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, true, false, false)} >
+                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, true, false)} >
                                                     <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
                                                 </Nav.Link>
                                             </ListGroup.Item>
@@ -641,7 +740,7 @@ function Channels(){
                                     postsStructure.push(
                                         <div  className="post-block" >
                                             <Stack direction='horizontal' style={{marginBottom:'2vw'}} id={post.id}>
-                                                <img src="1.png" style={{width:'2vw'}}></img>
+                                                <img src={post.avatar} style={{width:'2vw'}}></img>
                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                     <div className="fw-bold">{post.name} </div>
                                                     {post.username}
@@ -651,26 +750,33 @@ function Channels(){
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
                                             <p> {post.data}</p>
+                                            <Stack direction="horizontal" gap={3}>
+                                                {post.files.map(file => (
+                                                    
+                                                    <a href={createURL(file.file, file.fileType)}
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                                        {file.fileName}
+                                                    </a>
+                                               
+                                                ))}
+                                             </Stack>
                                             <Stack direction='horizontal' gap={3} style={{ alignItems:'center'}}>
-                                                <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
-                                                    <span>
-                                                        <Badge pill bg="info">
-                                                            {post.likes ?  post.likes : 0}
-                                                        </Badge>
-                                                    </span>
+                                                <Nav.Link  
+                                                    style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}
+                                                    onClick={()=>handlePostLike(post.id)}>
+                                                    <span style={{color:'#f86714', fontWeight:'bold'}}> {post.likes ?  post.likes : 0}</span>
                                                     <span 
                                                         class="material-symbols-outlined icons" 
                                                         style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
                                                             thumb_up
                                                     </span>
                                                 </Nav.Link>
-                                                <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
-                                                    <span>
-                                                        <Badge pill bg="info">
-                                                            {post.dislikes ? post.dislikes : 0}
-                                                           
-                                                        </Badge>
-                                                    </span>
+                                                <Nav.Link  
+                                                    style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}
+                                                    onClick={()=>handlePostDislike(post.id)}>
+                                                    <span style={{color:'#f86714', fontWeight:'bold'}}>  {post.dislikes ? post.dislikes : 0}</span>
                                                     <span 
                                                         class="material-symbols-outlined icons" 
                                                         style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
@@ -706,7 +812,7 @@ function Channels(){
                                                                         style={{fontSize:'small'}}
                                                                         >                                        
                                                                             <div className="fw-bold">{file.name}</div>                                
-                                                                            <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
+                                                                            <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true)} >
                                                                                 <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
                                                                             </Nav.Link>
                                                                         </ListGroup.Item>
@@ -728,7 +834,7 @@ function Channels(){
                                                             type='file' 
                                                             style={{ display: 'none' }}
                                                             ref={fileReplyRef}
-                                                            onChange={(e)=> handleFileInput(e,false, true, false)}
+                                                            onChange={(e)=> handleFileInput(e,false, true)}
                                                         />
                                                         <Nav.Link 
                                                             style={{fontSize:'small', color:'#f86714'}} 
@@ -783,26 +889,35 @@ function Channels(){
                                                                 <p className="ms-auto" style={{fontSize:'small'}}> posted on { new Date(childPost.datetime).toLocaleString()}</p>
                                                             </Stack>
                                                             <p>{childPost.data}</p>
+                                                            <Stack direction="horizontal" gap={3}>
+                                                                {childPost.files.map(file => (
+                                                                    
+                                                                    <a href={createURL(childPost.file, childPost.fileType)}
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                                                        {childPost.fileName}
+                                                                    </a>
+                                                            
+                                                                ))}
+                                                            </Stack>
                                                                 <Stack direction='horizontal' gap={3}>
-                                                                    <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
-                                                                        <span>
-                                                                            <Badge pill bg="info">
-                                                                                {childPost.likes ?  childPost.likes : 0}
-                                                                            </Badge>
-                                                                        </span>
+                                                                    <Nav.Link  
+                                                                        style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}
+                                                                        onClick={()=>handlePostLike(childPost.id)}>
+                                                                         <span style={{color:'#f86714', fontWeight:'bold'}}> {childPost.likes ?  childPost.likes : 0}</span>
+                                                                          
                                                                         <span 
                                                                             class="material-symbols-outlined icons" 
                                                                             style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714', fill:'#f86714'}}>
                                                                                 thumb_up
                                                                         </span>
                                                                     </Nav.Link>
-                                                                    <Nav.Link  style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}>
-                                                                        <span>
-                                                                            <Badge pill bg="info">
-                                                                                {childPost.dislikes ? childPost.dislikes : 0}
-                                                                            
-                                                                            </Badge>
-                                                                        </span>
+                                                                    <Nav.Link  
+                                                                        style={{ margin:'0', padding:'0', display:'flex', flexDirection:'row',alignItems:'center' }}
+                                                                        onClick={()=>handlePostDislike(childPost.id)}>
+                                                                       <span style={{color:'#f86714', fontWeight:'bold'}}> {childPost.dislikes ? childPost.dislikes : 0}</span>
+                                                                          
                                                                         <span 
                                                                             class="material-symbols-outlined icons" 
                                                                             style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
@@ -838,7 +953,7 @@ function Channels(){
                                                                                             style={{fontSize:'small'}}
                                                                                             >                                        
                                                                                                 <div className="fw-bold">{file.name}</div>                                
-                                                                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true, false)} >
+                                                                                                <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, false, true)} >
                                                                                                     <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
                                                                                                 </Nav.Link>
                                                                                             </ListGroup.Item>
@@ -860,7 +975,7 @@ function Channels(){
                                                                                 type='file' 
                                                                                 style={{ display: 'none' }}
                                                                                 ref={fileReplyRef}
-                                                                                onChange={(e)=> handleFileInput(e,false, true, false)}
+                                                                                onChange={(e)=> handleFileInput(e,false, true)}
                                                                             />
                                                                             <Nav.Link 
                                                                                 style={{fontSize:'small', color:'#f86714'}} 
@@ -929,7 +1044,7 @@ function Channels(){
                                 <p>Connections</p>
                             </Stack>
                             <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(currUserDetails.totalPosts)}</p>
                                 <p>Experties</p>
                             </Stack>
                         </Stack>
@@ -939,12 +1054,12 @@ function Channels(){
                 }
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
-                        <ListGroup.Item style={{fontWeight:'bold'}}># • Suggested Connections For You</ListGroup.Item>
+                        <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages For You</ListGroup.Item>
                         {connections.length > 0 && connections.map((user)=>(
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                                 <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getselectedUserDetails(user.username)}>View Profile</p></p>
-                                <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.username)} >Message</p>
+                                <p className='ms-auto view-profile-button'  onClick={()=>goToSelectedUserPage(user.username)} >Message</p>
                             </ListGroup.Item>
                         ))}
                     </ListGroup>
@@ -959,7 +1074,7 @@ function Channels(){
                                 <p style={{fontWeight:'bold', margin:'0'}}>@{selectedUserDetails.userInfo.username}</p>
                                 <p>{selectedUserDetails.userInfo.name}</p>
                                 <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {selectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                                <Button className='send-message-button'>Send Message</Button>
+                                <Button className='send-message-button' onClick={()=>goToSelectedUserPage(selectedUserDetails.userInfo.username)}>Send Message</Button>
                                 <hr style={{width:'90%'}}></hr>
                                 <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
                                 <Stack direction="horizontal" className='info-stack'>
@@ -972,7 +1087,7 @@ function Channels(){
                                         <p>Connections</p>
                                     </Stack>
                                     <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(selectedUserDetails.userInfo.totalPosts)}</p>
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>
@@ -1006,14 +1121,9 @@ function Channels(){
                             </>
                         }
                         </Offcanvas.Body>
-                    </Offcanvas>
-
-        
-
+                    </Offcanvas>      
                 </div>
-                
             </div>
-
        </div>
     )
 }

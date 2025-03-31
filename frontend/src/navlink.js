@@ -204,11 +204,6 @@ function Navlink({removeAccess}){
                                     </ListGroup.Item>
                                    
                                 })}
-                                 <ListGroup.Item className='message-item' onClick={()=>goToSearchedPerson("person.username")}>
-                                        <img src="/Avatars.png" style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                                        <p style={{margin:'0'}}>"xqcecewe"<p className="view-profile-button">"qdxwecwcwec"</p></p>
-                                        
-                                    </ListGroup.Item>
                                 </ListGroup>     
                             </div>
                         </div>

@@ -4,6 +4,8 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const PORT = 4000;
 const app = express();
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 
 app.use(cors({
@@ -382,7 +384,7 @@ app.post('/addMessage',(request, response)=>{
               return;
           }
           afterMsgUpload(request.body.senderId, request.body.receiverId);
-          response.status(200).send("New message added successfully!");
+          response.status(200).json({ messageId: result.insertId });
       })
 })
 
@@ -438,19 +440,20 @@ app.post('/addPost',(request, response)=>{
               request.body.data,
               (parentLevel + 1)
             ], 
-            error=>{
+            (error, result)=>{
                 if(error){
                     console.log(error);
                     response.status(500).send("Server error while adding new post");
                     return;
                 }
                 afterPostUpload( request.body.userId, request.body.channelId);
-                response.status(200).send("New post added successfully!");
+                response.status(200).json({ postId: result.insertId });
+               
             })
 })
 
-app.post('/uploadFiles',(request, response)=>{
-    const filePromise = request.body.files.map((file)=>{
+app.post('/uploadFiles',upload.array('allFiles'),(request, response)=>{
+    const filePromise = request.files.map((file)=>{
         return new Promise((resolve,reject)=>{
             db.query(`INSERT INTO postForum.fileTable(
                       postId,
@@ -458,16 +461,18 @@ app.post('/uploadFiles',(request, response)=>{
                       fileName,
                       fileType,
                       file
-                    ),VALUES(?,?,?,?,?)`,
+                    )VALUES(?,?,?,?,?)`,
                     [
                       request.body.postId,
                       request.body.messageId,
-                      file.fileName,
-                      file.fileType,
-                      file.file
+                      file.originalname,
+                      file.mimetype,
+                      file.buffer
                     ],
                     (error,result)=>{
                         if(error){
+
+                            console.log(error);
                             reject(error);
                         }
                         else{
@@ -480,8 +485,9 @@ app.post('/uploadFiles',(request, response)=>{
     Promise.all(filePromise).then(()=>{
         response.status(200).send("New files added successfully!");
     })
-    .catch(()=>{
-        res.status(500).send('Server error while saving files');
+    .catch((error)=>{
+        console.log(error);
+        response.status(500).send('Server error while saving files');
     })
     
 })
@@ -635,6 +641,50 @@ app.get('/searchPerson',(request, response)=>{
 })
 
 
+app.post('/likePost',(request,response)=>{
+    db.query(`UPDATE postForum.postTable SET likes =  IFNULL(likes, 0) + 1 WHERE id = ?`,
+            [request.body.postId], (error,result)=>{
+                if(error){
+                    response.status(500).send("Server error during increasing likes");
+                    return;
+                }
+                db.query(`SELECT c.name AS name , c.id AS id 
+                          FROM  postForum.channelTable c
+                          JOIN postForum.postTable p
+                          ON c.id = p.channelId
+                          WHERE p.id = ?`,
+                    [request.body.postId], (error,channelResult)=>{
+                        if(error){
+                            response.status(500).send("Server error during increasing likes");
+                            return;
+                        }
+                        response.status(200).json({channelId: channelResult[0].id, channelName: channelResult[0].name });
+                    })
+            })
+})
+
+app.post('/dislikePost',(request,response)=>{
+    db.query(`UPDATE postForum.postTable SET dislikes =  IFNULL(dislikes, 0) + 1 WHERE id = ?`,
+            [request.body.postId], (error,result)=>{
+                if(error){
+                    response.status(500).send("Server error during increasing dislikes");
+                    return;
+                }
+                db.query(`SELECT c.name AS name , c.id AS id 
+                          FROM  postForum.channelTable c
+                          JOIN postForum.postTable p
+                          ON c.id = p.channelId
+                          WHERE p.id = ?`,
+                    [request.body.postId], (error,channelResult)=>{
+                        if(error){
+                            response.status(500).send("Server error during increasing likes");
+                            return;
+                        }
+                        response.status(200).json({channelId: channelResult[0].id, channelName: channelResult[0].name });
+                    })
+            })
+})
+
 
 
 
@@ -756,6 +806,18 @@ app.post('/getUserDetails',(request,response)=>{
         })
     })
 })
+
+
+app.get('/maxPosts',(request,response)=>{
+    db.query(`SELECT MAX(totalPosts) AS Score from postForum.userTable ,(error,result)=>{
+        if(error){
+            response.status(500).send("Server error during retriving max post number");
+            return;
+        }
+        response.status(200).json(result[0].Score);
+    }`)
+})
+
 
 
 app.listen(PORT,()=>{

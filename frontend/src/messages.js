@@ -164,6 +164,7 @@ function Messages(){
             const response =  await axios.post(`${window.BASE_URL}/addMessage`, requestData);
             if (response.status === 200) {
                 console.log("Successfully added new message");
+                handleFileUpload(response.data.messageId);
                 getAllMessages(userId);
             } 
             else{
@@ -173,6 +174,35 @@ function Messages(){
             console.error("Catched axios error during adding new message: ",error);
         }
     }
+
+
+    const handleFileUpload = async (message)=>{
+        if(msgFiles.length === 0){
+            return;
+        }
+        const formData = new FormData();
+        formData.append('messageId',message);
+       
+        msgFiles.forEach((file)=>{
+            formData.append('allFiles',file)
+        });
+        
+        try {
+            const response = await axios.post(`${window.BASE_URL}/uploadFiles`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            if (response.status === 200) {
+                setMsgFiles([]);
+                console.log("Files uploaded successfully");
+            }
+        } catch (error) {
+            console.error("Error while uploading files:", error);
+        }
+    }
+
+
 
     const [selectedUser, setSelectedUser] = useState('');
     const [currUserId, setCurrUserId] = useState('');
@@ -228,7 +258,37 @@ function Messages(){
         navigateTo('/channels',{state:params});
     }
 
+    
+    const createURL = (fileData, fileType) =>{
+        const file = new Uint8Array(fileData.data);
+        const blob = new Blob([file], { type: fileType });
+        return URL.createObjectURL(blob);
+    }
 
+
+    const getExpertise = async(currPosts) =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
+            if (response.status === 200) {
+                const score = (currPosts/response.data)*100;
+                let result = "";
+                if( score < 30 ){
+                    result = 'Begginer';
+                }
+                else if(score >= 30 && score < 60){
+                    result = 'Proficient';
+                }
+                else{
+                    result = 'Expert';
+                }       
+                console.log("Successfully got exertise");
+                return result;
+            } 
+        } catch (error) {
+            console.error("Catched axios error during retriving expertise : ",error);
+            return null;
+        }
+    }
 
     return(
         <div className="message-page">    
@@ -251,10 +311,32 @@ function Messages(){
                             message.senderId === connectedUserDetails.userInfo.id ?
                             <div className='received-msg'>
                                 <p>{message.message}</p>
+                                <Stack direction="horizontal" gap={3}>
+                                    {message.files.map(file => (
+                                        <a href={createURL(file.file, file.fileType)}
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                            {file.fileName}
+                                        </a>
+                                    
+                                    ))}
+                                </Stack>
                             </div>
                             :
                             <div className='sent-msg'>
                                 <p>{message.message}</p>
+                                <Stack direction="horizontal" gap={3}>
+                                    {message.files.map(file => (
+                                        <a href={createURL(file.file, file.fileType)}
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                            {file.fileName}
+                                        </a>
+                                    
+                                    ))}
+                                </Stack>
                             </div>
                         );   
                         })
@@ -345,7 +427,7 @@ function Messages(){
                                 <p>Connections</p>
                             </Stack>
                             <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(connectedUserDetails.userInfo.totalPosts)}</p>
                                 <p>Experties</p>
                             </Stack>
                         </Stack>

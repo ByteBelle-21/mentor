@@ -55,6 +55,7 @@ function Profile(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setCurrUserDetails(response.data);
+                setNewExpertise(getExpertise(response.data.userInfo.totalPosts));
                 console.log("Successfully retrieved current user details");
             } 
             else{
@@ -71,7 +72,7 @@ function Profile(){
             setNewName(currUserDetails.userInfo.name);
             setNewUsername(currUserDetails.userInfo.username);
             setNewSkills(currUserDetails.userInfo.skills);
-            setEmail(currUserDetails.userInfo.email);
+            setNewEmail(currUserDetails.userInfo.email);
             setNewProfession(currUserDetails.userInfo.profession);
         }
         if(currUserDetails.media && currUserDetails.media.length === 3){
@@ -169,7 +170,7 @@ function Profile(){
         const params = {
             userFromState: username,
         }
-        navigateTo('/profile',{state:params});
+        navigateTo('/message',{state:params});
     }
 
     const openChannelOnOtherPage = (channel)=>{
@@ -267,6 +268,31 @@ function Profile(){
         navigateTo('/channels',{state:params});
     }
 
+
+    const getExpertise = async(currPosts) =>{
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
+            if (response.status === 200) {
+                const score = (currPosts/response.data)*100;
+                let result = "";
+                if( score < 30 ){
+                    result = 'Begginer';
+                }
+                else if(score >= 30 && score < 60){
+                    result = 'Proficient';
+                }
+                else{
+                    result = 'Expert';
+                }       
+                console.log("Successfully got exertise");
+                return result;
+            } 
+        } catch (error) {
+            console.error("Catched axios error during retriving expertise : ",error);
+            return null;
+        }
+    }
+
     return(
         <div className='profile-page'>
            <div className='first-container'>
@@ -304,7 +330,7 @@ function Profile(){
                                         <p>Connections</p>
                                     </Stack>
                                     <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>Begginer</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(popularUserDetails.userInfo.totalPosts)}</p>
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>
