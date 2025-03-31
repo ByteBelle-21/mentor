@@ -39,6 +39,7 @@ function Profile(){
 
 
     const [newName, setNewName] = useState('');
+    const [newId, setNewId] = useState(0);
     const [newUsername, setNewUsername] = useState('');
     const [newProfession, setNewProfession] = useState('');
     const [newSkills, setNewSkills] = useState('');
@@ -74,6 +75,7 @@ function Profile(){
             setNewEmail(currUserDetails.userInfo.email);
             setNewProfession(currUserDetails.userInfo.profession);
             setNewExpertise(currUserDetails.userInfo.expertise);
+            setNewId(currUserDetails.userInfo.id);
         }
         if(currUserDetails.media && currUserDetails.media.length === 3){
             setGotMediaLimit(true);
@@ -206,7 +208,8 @@ function Profile(){
 
     const [selectedPic, setSelectedPic] = useState(-1);
     const handleNewPic = () =>{
-        SetNewAvatar(`/Group${selectedPic}.png`)
+        SetNewAvatar(`/Group${selectedPic}.png`);
+        closeAvatarModal();
     }
 
 
@@ -255,13 +258,13 @@ function Profile(){
     }
 
 
-    const handleSaveChanges = async(user) =>{
+    const handleSaveChanges = async() =>{
         const name = newName;
         const username =  newUsername;
         const skills = newSkills.split(',').map(item => item.trim()).join(',');
         const avatar = newAvatar;
         const profession =  newProfession;
-        const id = user;
+        const id = newId;
         const data ={name, username, skills, avatar, profession, id};
         try {
             const response =  await axios.post(`${window.BASE_URL}/saveChanges`, data);
@@ -497,7 +500,7 @@ function Profile(){
                             <Stack direction='horizontal' gap={4}>
                                 <Button className='channel-form-button' onClick={closeAvatarModal}>
                                     Cancel
-                                </Button>
+())()=>                                </Button>
                                 <Button className='channel-form-button' onClick={()=>handleNewPic()}>
                                     Select
                                 </Button>

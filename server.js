@@ -5,6 +5,7 @@ const mysql = require('mysql2');
 const PORT = 4000;
 const app = express();
 const multer = require('multer');
+const e = require('express');
 const upload = multer({ storage: multer.memoryStorage() });
 
 
@@ -67,7 +68,8 @@ db.getConnection((err,connection)=>{
                       skills TEXT NOT NULL,
                       avatar VARCHAR(100) NOT NULL,
                       totalPosts INT NOT NULL,
-                      connections INT NOT NULL
+                      connections INT NOT NULL,
+                      expertise VARCHAR(50) NOT NULL
                     )`,error=>{
                         if(error){
                             console.log("Error occured while creating user table : ", error);
@@ -209,8 +211,10 @@ app.post('/signup', (request,response)=>{
                       skills,
                       avatar,
                       totalPosts,
-                      connections)
-                      VALUES (?,?,?,?,?,?,?,?,?)`,
+                      connections,
+                      expertise
+                      )
+                      VALUES (?,?,?,?,?,?,?,?,?,?)`,
                     [ request.body.signUsername,
                       request.body.signEmail,
                       request.body.signPassword,
@@ -219,7 +223,8 @@ app.post('/signup', (request,response)=>{
                       request.body.signSkills,
                       request.body.signAvatar,
                       0,
-                      0
+                      0,
+                      "Beginner"
                     ],error=>{
                         if(error){
                             response.status(500).send("Server error during adding new user to user table");
@@ -501,13 +506,34 @@ function afterPostUpload(user,channel){
         }
         console.log("Successfully updated total posts in channelstable");
     });
-    db.query(` UPDATE postForum.userTable SET totalPosts = IFNULL(totalPosts, 0) + 1 WHERE id = ?`,[user],error=>{
+
+   
+    db.query(`SELECT MAX(totalPosts) AS Score, totalPosts AS userScore from postForum.userTable WHERE id = ?`,[user] ,(error,result)=>{
         if(error){
-            console.error("Server error during updating total posts in postForum.userTable");
+            response.status(500).send("Server error during retriving max post number");
             return;
         }
-        console.log("Successfully updated total posts in postForum.userTable");
-    });
+        const highScore = result[0].Score;
+        const currScore = result[0].userScore;
+        const ratio = (currScore/highScore) * 100;
+        let expertise = "";
+        if(ratio <= 30){
+            expertise = "Beginner";
+        }
+        else if(ratio > 30 && ratio <=60){
+            expertise = "Proficient";
+        }
+        else{
+            expertise = "Expert";
+        }
+        db.query(` UPDATE postForum.userTable SET totalPosts = IFNULL(totalPosts, 0) + 1, expertise =? WHERE id = ?`,[expertise,user],error=>{
+            if(error){
+                console.error("Server error during updating total posts and expertise in postForum.userTable");
+                return;
+            }
+            console.log("Successfully updated total posts and expertise in postForum.userTable");
+        });
+    })
 }
 
 
@@ -546,8 +572,8 @@ app.get('/getChannelPosts',(request, response)=>{
             p.topic,
             p.data,
             pT.level + 1 AS level,
-            pT.likes,
-            pT.dislikes,
+            p.likes,
+            p.dislikes,
             pT.root_id AS root_id,
             pT.root_datetime AS root_datetime,
             CONCAT(pT.path, '-', LPAD(p.id, 10, '0')) AS path
@@ -735,7 +761,7 @@ app.post('/saveChanges',(request, response)=>{
     db.query(`UPDATE postForum.userTable 
               SET 
               name= ?, username=?, skills=?,avatar=?, profession=?
-              WHERE userId=?`,
+              WHERE id=?`,
             [ request.body.name,
               request.body.username,
               request.body.skills,
@@ -744,6 +770,7 @@ app.post('/saveChanges',(request, response)=>{
               request.body.id,
             ],error=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error during saving changes for profile");
                     return;
                 }
@@ -822,16 +849,6 @@ app.post('/getUserDetails',(request,response)=>{
     })
 })
 
-
-app.get('/maxPosts',(request,response)=>{
-    db.query(`SELECT MAX(totalPosts) AS Score from postForum.userTable` ,(error,result)=>{
-        if(error){
-            response.status(500).send("Server error during retriving max post number");
-            return;
-        }
-        response.status(200).json(result[0].Score);
-    })
-})
 
 
 app.post('/deleteChannel',(request,response)=>{

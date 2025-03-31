@@ -973,7 +973,7 @@ function Channels(){
                                                                         target="_blank" 
                                                                         rel="noopener noreferrer"
                                                                         style={{ fontSize: 'small', textDecoration: 'none' }}>
-                                                                        {childPost.fileName}
+                                                                        {file.fileName}
                                                                     </a>
                                                             
                                                                 ))}
