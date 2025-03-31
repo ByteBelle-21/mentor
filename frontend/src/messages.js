@@ -250,7 +250,6 @@ function Messages(){
     }
 
     const goToSearchedPost =(channel, postId) =>{
-        closeSearchModal();
         const params = {
             channelFromState: channel,
             postFromState: postId

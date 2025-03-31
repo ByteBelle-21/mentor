@@ -113,6 +113,8 @@
 .channel-item{
     border: none;
     padding-bottom: 0.5vw;
+    display: flex;
+    flex-direction: row;
 }
 
 .channel-item:hover, .message-item:hover{

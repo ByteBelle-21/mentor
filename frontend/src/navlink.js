@@ -40,6 +40,8 @@ function Navlink({removeAccess}){
     const[searchChannelResult, setSearchChannelResult] = useState([]);
 
 
+    
+    
     useEffect(()=>{
         if(searchType === 1){
             if(!searchData){

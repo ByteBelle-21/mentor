@@ -716,6 +716,21 @@ app.get('/activeChannels', (request, response)=>{
     })
 })
 
+
+
+app.get('/allUsers', (request, response)=>{
+    db.query(`SELECT * from postForum.userTable WHERE username !=? `,
+            [ request.query.currUser],(error, result)=>{
+                if(error){
+                    response.status(500).send("Server error during retriving active users");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+
 app.post('/saveChanges',(request, response)=>{
     db.query(`UPDATE postForum.userTable 
               SET 

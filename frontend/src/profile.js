@@ -127,21 +127,41 @@ function Profile(){
     const [popularUsers, setPopularUsers] =  useState([]);
     const getAllPopularUsers = async() =>{
         const username  =  sessionStorage.getItem('session_user');
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/activeUsers`, {
-                params:{
-                    currUser : username
+        if(username === "admin"){
+            try {
+                const response =  await axios.get(`${window.BASE_URL}/allUsers`, {
+                    params:{
+                        currUser : username
+                    }
+                });
+                if (response.status === 200) {
+                    setPopularUsers(response.data);
+                    console.log("Successfully retrieved all popular users",response.data);
+                } 
+                else{
+                    console.log(response.message)
                 }
-            });
-            if (response.status === 200) {
-                setPopularUsers(response.data);
-                console.log("Successfully retrieved all popular users",response.data);
-            } 
-            else{
-                console.log(response.message)
+            } catch (error) {
+                console.error("Catched axios error during retriving all popular users: ",error);
             }
-        } catch (error) {
-            console.error("Catched axios error during retriving all popular users: ",error);
+        }
+        else{
+            try {
+                const response =  await axios.get(`${window.BASE_URL}/activeUsers`, {
+                    params:{
+                        currUser : username
+                    }
+                });
+                if (response.status === 200) {
+                    setPopularUsers(response.data);
+                    console.log("Successfully retrieved all popular users",response.data);
+                } 
+                else{
+                    console.log(response.message)
+                }
+            } catch (error) {
+                console.error("Catched axios error during retriving all popular users: ",error);
+            }
         }
     }
 
@@ -164,14 +184,9 @@ function Profile(){
     useEffect(()=>{
         getAllPopularChannels();
         getAllPopularUsers();
-    })
+    },[]);
 
-    const openCanvasOnOtherPage = (username)=>{
-        const params = {
-            userFromState: username,
-        }
-        navigateTo('/message',{state:params});
-    }
+   
 
     const openChannelOnOtherPage = (channel)=>{
         const params = {
@@ -260,7 +275,7 @@ function Profile(){
     }
 
     const goToSearchedPost =(channel, postId) =>{
-        closeSearchModal();
+        closeProfileCanvas();
         const params = {
             channelFromState: channel,
             postFromState: postId
@@ -268,6 +283,14 @@ function Profile(){
         navigateTo('/channels',{state:params});
     }
 
+     // Functionallity to navigate to message page and open selected user's profile
+     const goToSelectedUserPage = (username)=>{
+        closeProfileCanvas();
+        const params = {
+            userFromState: username,
+        }
+        navigateTo('/messages',{state:params});
+    }
 
     const getExpertise = async(currPosts) =>{
         try {
@@ -293,19 +316,35 @@ function Profile(){
         }
     }
 
+
+    const[isAdmin, setIsAdmin] =  useState(false);
+
+    useEffect(()=>{
+        if(sessionStorage.getItem('session_user') === "admin"){
+            setIsAdmin(true);
+        }
+    })
+
     return(
         <div className='profile-page'>
            <div className='first-container'>
-                <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
-                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
+                {!isAdmin ?
+                    <>
+                    <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
+                    <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
+                    </>
+                :
+                    <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # All Users</h6>
+                }
                 <ListGroup variant="flush" >
                     {popularUsers && popularUsers.length > 0 && popularUsers.map((user)=>(
                         <ListGroup.Item className='message-item'>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getPopularUserDetails(user.username)}>View Profile</p></p>
-                            <p className='ms-auto view-profile-button'  onClick={()=>openCanvasOnOtherPage(user.username)} >Message</p>
+                            <p className='ms-auto view-profile-button'  onClick={()=>goToSelectedUserPage(user.username)} >Message</p>
                         </ListGroup.Item>
                     ))}
+    
                     <Offcanvas show={showProfileCanvas} onHide={closeProfileCanvas} placement='end'>
                         <Offcanvas.Header >
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
@@ -317,7 +356,8 @@ function Profile(){
                                 <p style={{fontWeight:'bold', margin:'0'}}>@{popularUserDetails.userInfo.username}</p>
                                 <p>{popularUserDetails.userInfo.name}</p>
                                 <p>Hello {currUserDetails.userInfo.name}! 👋 Nice to meet you.I am {popularUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                                <Button className='send-message-button'>Send Message</Button>
+                                {isAdmin ? <Button className='send-message-button'>Remove User</Button>:
+                                <Button className='send-message-button' onClick={()=>goToSelectedUserPage(popularUserDetails.userInfo.username)}>Send Message</Button>}
                                 <hr style={{width:'90%'}}></hr>
                                 <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
                                 <Stack direction="horizontal" className='info-stack'>
@@ -366,14 +406,18 @@ function Profile(){
                         </Offcanvas.Body>
                     </Offcanvas>
                 </ListGroup>
-                <hr></hr>
-                <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
-                <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
-                <ListGroup variant="flush" className='profile-channel-list'>
-                    {allPopularChannels.length > 0 && allPopularChannels.map((channel)=>(
-                         <ListGroup.Item className='channel-item' onClick={()=>openChannelOnOtherPage(channel.name)}># • {channel.name}</ListGroup.Item>
-                    ))}
-                </ListGroup>
+                {!isAdmin && 
+                    <>
+                    <hr></hr>
+                    <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
+                    <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
+                    <ListGroup variant="flush" className='profile-channel-list'>
+                        {allPopularChannels.length > 0 && allPopularChannels.map((channel)=>(
+                            <ListGroup.Item className='channel-item' onClick={()=>openChannelOnOtherPage(channel.name)}># • {channel.name}</ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                </>
+                }
             </div>
             <div className='profile-div'>
                 <img src="Avatars.png" style={{width:'7vw', margin:'1vw'}}></img>

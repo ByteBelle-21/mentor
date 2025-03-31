@@ -135,32 +135,7 @@ function Channels(){
         }
     }
 
-    // Functionality to retrieve current logged in user's expertise
-
-    const getExpertise = async(currPosts) =>{
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
-            if (response.status === 200) {
-                const score = (currPosts/response.data)*100;
-                let result = "";
-                if( score < 30 ){
-                    result = 'Begginer';
-                }
-                else if(score >= 30 && score < 60){
-                    result = 'Proficient';
-                }
-                else{
-                    result = 'Expert';
-                }       
-                console.log("Successfully got exertise");
-                return result;
-            } 
-        } catch (error) {
-            console.error("Catched axios error during retriving expertise : ",error);
-            return null;
-        }
-    }
-
+   
     // Functionality to retrive all user's who are conncted to logged in user
     const getAllConnections = async(currUser) =>{
         try {
@@ -465,6 +440,7 @@ function Channels(){
 
     // Functionallity to navigate to message page and open selected user's profile
     const goToSelectedUserPage = (username)=>{
+        goToSelectedUserPage();
         const params = {
             userFromState: username,
         }
@@ -474,7 +450,7 @@ function Channels(){
 
     // Functionality to navigate to channel page and go to searched post
     const goToSearchedPost =(channel, postId) =>{
-        closeSearchModal();
+        closeProfileCanvas();
         const params = {
             channelFromState: channel,
             postFromState: postId
@@ -531,6 +507,14 @@ function Channels(){
         }
     }
 
+    const[isAdmin, setIsAdmin] =  useState(false);
+
+    useEffect(()=>{
+        if(sessionStorage.getItem('session_user') === "admin"){
+            setIsAdmin(true);
+        }
+    })
+
     return(
        <div className="channel-page">
             <Modal
@@ -573,18 +557,17 @@ function Channels(){
                 <Button className='channel-button' onClick={openChannelModal}> <span class="material-symbols-outlined"> add </span>  New Channel</Button>
                 <ListGroup variant="flush" className='channel-list' >
                     <ListGroup.Item> # • All Channels</ListGroup.Item>
-                    <ListGroup.Item 
-                        className='channel-item' 
-                        onClick={()=>setChannel("Homepage")}>
-                            # • Homepage
+                    <ListGroup.Item className='channel-item'>
+                            <Nav.Link onClick={()=>setChannel("Homepage")}># • Homepage</Nav.Link>
                     </ListGroup.Item>
+                    
                     {allChannels.length > 0 && allChannels.map((channel)=>(
-                         <ListGroup.Item 
-                            className='channel-item' 
-                            onClick={()=>handleChannelSelection(channel.id, channel.name)}>
-                                # • {channel.name}
+                         <ListGroup.Item className='channel-item'>
+                                <Nav.Link  onClick={()=>handleChannelSelection(channel.id, channel.name)}> # • {channel.name}</Nav.Link>
+                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons" >delete</span></Nav.Link>}
                         </ListGroup.Item>
                     ))}
+                    
                 </ListGroup>
             </div>
             <div className='large-container'>
@@ -745,7 +728,8 @@ function Channels(){
                                                     <div className="fw-bold">{post.name} </div>
                                                     {post.username}
                                                 </div>
-                                                <p className="ms-auto" style={{fontSize:'small'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
+                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
+                                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                             </Stack>
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
@@ -886,7 +870,8 @@ function Channels(){
                                                                     <div className="fw-bold">{childPost.name} </div>
                                                                     {childPost.username}
                                                                 </div>
-                                                                <p className="ms-auto" style={{fontSize:'small'}}> posted on { new Date(childPost.datetime).toLocaleString()}</p>
+                                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(childPost.datetime).toLocaleString()}</p>
+                                                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                                             </Stack>
                                                             <p>{childPost.data}</p>
                                                             <Stack direction="horizontal" gap={3}>
@@ -1044,7 +1029,7 @@ function Channels(){
                                 <p>Connections</p>
                             </Stack>
                             <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(currUserDetails.totalPosts)}</p>
+                                <p style={{margin:'0', fontWeight:'bold'}}></p>
                                 <p>Experties</p>
                             </Stack>
                         </Stack>
