@@ -804,6 +804,7 @@ app.post('/removeMedia',(request, response)=>{
     db.query(`DELETE FROM postForum.mediaTable WHERE userId=? AND id=?`,
             [ request.body.userId, request.body.mediaId ],error=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error during deleting media");
                     return;
                 }

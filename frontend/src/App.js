@@ -9,7 +9,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 function App() {
-    window.BASE_URL = 'https://psutar9920-4000.theiaopenshiftnext-0-labs-prod-theiaopenshift-4-tor01.proxy.cognitiveclass.ai/';
+    window.BASE_URL = 'https://psutar9920-4000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/';
 
     const [access, setAccess] = useState(true);
     const [user, setUser] = useState('');

@@ -56,6 +56,7 @@ function Profile(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setCurrUserDetails(response.data);
+                console.log(response.data);
                 console.log("Successfully retrieved current user details");
             } 
             else{
@@ -75,6 +76,7 @@ function Profile(){
             setNewEmail(currUserDetails.userInfo.email);
             setNewProfession(currUserDetails.userInfo.profession);
             setNewExpertise(currUserDetails.userInfo.expertise);
+            SetNewAvatar(currUserDetails.userInfo.avatar);
             setNewId(currUserDetails.userInfo.id);
         }
         if(currUserDetails.media && currUserDetails.media.length === 3){
@@ -250,6 +252,7 @@ function Profile(){
             const response =  await axios.post(`${window.BASE_URL}/removeMedia`, data);
             if (response.status === 200) {
                 getCurrUserDertails();
+                setGotMediaLimit(false);
                 console.log("Successfully removed media");
             } 
         } catch (error) {
@@ -460,7 +463,7 @@ function Profile(){
                 }
             </div>
             <div className='profile-div'>
-                <img src="Avatars.png" style={{width:'7vw', margin:'1vw'}}></img>
+                <img src={newAvatar} style={{width:'7vw', margin:'1vw'}}></img>
                 {isEditMode ?
                     <>
                         <Button className='edit-profile-btn' style={{marginBottom:'1vw'}} onClick={()=>setAvatarModal(true)}> 
@@ -500,7 +503,7 @@ function Profile(){
                             <Stack direction='horizontal' gap={4}>
                                 <Button className='channel-form-button' onClick={closeAvatarModal}>
                                     Cancel
-())()=>                                </Button>
+                                 </Button>
                                 <Button className='channel-form-button' onClick={()=>handleNewPic()}>
                                     Select
                                 </Button>
@@ -529,7 +532,7 @@ function Profile(){
                 <div className='social-media-block'>
                     <Stack direction='horizontal'>
                         <p style={{fontWeight:'bold', margin:'0'}}># Add Social Media</p>
-                        <Nav.Link className='ms-auto' onClick={openMediaModal}><span class="material-symbols-outlined icons" >add</span></Nav.Link>
+                        {!gotMediaLimit && <Nav.Link className='ms-auto' onClick={openMediaModal}><span class="material-symbols-outlined icons" >add</span></Nav.Link>}
                         <Modal
                             show={showMediaModal} 
                             onHide={closeMediaModal}
@@ -542,25 +545,25 @@ function Profile(){
                                     <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
                                     Add Social Media Account 
                                 </Stack>
-                                <Form.Group className='form-group'>
+                                <Form.Group className='form-group'> 
                                     <Form.Label >
                                         Media 
                                     </Form.Label>
                                     <Form.Select aria-label="Default select example" style={{borderColor:'blue'}} 
-                                        onChange={()=>{setSelectedMediaType(e.target.value); setSelectedMediaImage(`${e.target.value}.png`);}}> 
+                                        onChange={(e)=>{setSelectedMediaType(e.target.value); setSelectedMediaImage(`${e.target.value}.png`);}}> 
                                         <option>Select media</option>
                                         <option value="1">Instagram</option>
                                         <option value="2">facebook</option>
                                         <option value="3">LinkedIn</option>
-                                        <option value="4">Reddit</option>
-                                        <option value="5">Youtube</option>
+                                        <option value="4">SnapChat</option>
+                                        <option value="5">Reddit</option>
                                     </Form.Select>
                                 </Form.Group>
                                 <Form.Group className='form-group'>
                                     <Form.Label >
                                         Account Link
                                     </Form.Label>
-                                    <Form.Control style={{borderColor:'red'}} onChange={()=>setSelectedMediaLink(e.target.value)}/>
+                                    <Form.Control style={{borderColor:'red'}} onChange={(e)=>setSelectedMediaLink(e.target.value)}/>
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
                                     <Button className='channel-form-button' onClick={closeMediaModal}>
@@ -573,22 +576,24 @@ function Profile(){
                             </Form>
                         </Modal>
                     </Stack>
-                    {!gotMediaLimit ? 
+                    {gotMediaLimit ? 
                         <p style={{fontSize:'small', color:'red'}}>
                             You have reached Your Limit. You can link at most 3 Social media acccounts.
                         </p>:"" 
                     }
                     <hr></hr>
                     {currUserDetails.media && currUserDetails.userInfo  && currUserDetails.media.map((media)=>{
-                        <Stack direction='horizontal' className='media-item-stack'>
-                            <img src={media.image} style={{width:'1.5vw', marginRight:'0.5vw'}}></img>
-                            <p style={{margin:'0'}}>{media.link}</p>
-                            <Nav.Link className=' ms-auto' onClick={()=>handleDeleteMedia(media.id, currUserDetails.userInfo.id)}>
-                                <span class="material-symbols-outlined icons" style={{fontSize:'1vw'}}>
-                                    remove
-                                </span>
-                            </Nav.Link>
-                        </Stack>
+                        return(
+                            <Stack direction='horizontal' className='media-item-stack'>
+                                <img src={media.image} style={{width:'1.5vw', marginRight:'0.5vw'}}></img>
+                                <p style={{margin:'0'}}>{media.link}</p>
+                                <Nav.Link className=' ms-auto' onClick={()=>handleDeleteMedia(media.id, currUserDetails.userInfo.id)}>
+                                    <span class="material-symbols-outlined icons" style={{fontSize:'1vw'}}>
+                                        remove
+                                    </span>
+                                </Nav.Link>
+                            </Stack>
+                        );
                     })}
                 </div>
             </div>
@@ -664,10 +669,12 @@ function Profile(){
                 <p style={{fontWeight:'bold'}}># Activity History</p>
                 <ListGroup className='history-list'>
                     {currUserDetails.post && currUserDetails.post.map((currPost)=>{
-                        <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(currPost.channel, currPost.id)}>
-                            <div className="fw-bold" style={{color:'#d84434'}}>{currPost.channel}</div>
-                            <p style={{fontSize:'small'}} >showPreview({currPost.data},10)</p>
-                        </ListGroup.Item>
+                        return(
+                            <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(currPost.channel, currPost.id)}>
+                                <div className="fw-bold" style={{color:'#d84434'}}>{currPost.channel}</div>
+                                <p style={{fontSize:'small'}} >showPreview({currPost.data},10)</p>
+                            </ListGroup.Item>
+                        );
                     })}
                 </ListGroup>
             </div>
