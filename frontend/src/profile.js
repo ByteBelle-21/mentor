@@ -1,3 +1,4 @@
+
 import './profile.css';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Button from 'react-bootstrap/Button';
@@ -197,8 +198,11 @@ function Profile(){
     const [selectedMediaLink, setSelectedMediaLink] = useState('');
     const [selectedMediaImage, setSelectedMediaImage] = useState('');
 
-    const handleNewMedia = async(user) =>{
-        const userId = user;
+    const handleNewMedia = async() =>{
+        if(!currUserDetails.userInfo){
+            return;
+        }
+        const userId = currUserDetails.userInfo.id;
         const type =  selectedMediaType;
         const link = selectedMediaLink;
         const image = selectedMediaImage;
@@ -254,13 +258,22 @@ function Profile(){
         }
     }
 
+    const goToSearchedPost =(channel, postId) =>{
+        closeSearchModal();
+        const params = {
+            channelFromState: channel,
+            postFromState: postId
+        }
+        navigateTo('/channels',{state:params});
+    }
+
     return(
         <div className='profile-page'>
            <div className='first-container'>
                 <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
                 <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
                 <ListGroup variant="flush" >
-                    {popularUsers.length > 0 && popularUsers.map((user)=>(
+                    {popularUsers && popularUsers.length > 0 && popularUsers.map((user)=>(
                         <ListGroup.Item className='message-item'>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getPopularUserDetails(user.username)}>View Profile</p></p>
@@ -314,7 +327,7 @@ function Profile(){
                                     <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
                                     <ListGroup className='history-list'>
                                         {popularUserDetails.post.map((post)=>{
-                                            <ListGroup.Item as="li" className='activity-list-item'>
+                                            <ListGroup.Item as="li" className='activity-list-item'  onClick={()=>goToSearchedPost(post.channel, post.id)}>
                                                 <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
                                                 <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
                                             </ListGroup.Item>
@@ -456,11 +469,11 @@ function Profile(){
                         </p>:"" 
                     }
                     <hr></hr>
-                    {currUserDetails.media && currUserDetails.media.map((media)=>{
+                    {currUserDetails.media && currUserDetails.userInfo  && currUserDetails.media.map((media)=>{
                         <Stack direction='horizontal' className='media-item-stack'>
                             <img src={media.image} style={{width:'1.5vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>{media.link}</p>
-                            <Nav.Link className=' ms-auto' onClick={()=>handleDeleteMedia()}>
+                            <Nav.Link className=' ms-auto' onClick={()=>handleDeleteMedia(media.id, currUserDetails.userInfo.id)}>
                                 <span class="material-symbols-outlined icons" style={{fontSize:'1vw'}}>
                                     remove
                                 </span>
@@ -541,9 +554,9 @@ function Profile(){
                 <p style={{fontWeight:'bold'}}># Activity History</p>
                 <ListGroup className='history-list'>
                     {currUserDetails.post && currUserDetails.post.map((currPost)=>{
-                        <ListGroup.Item as="li" className='activity-list-item'>
+                        <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(currPost.channel, currPost.id)}>
                             <div className="fw-bold" style={{color:'#d84434'}}>{currPost.channel}</div>
-                            <p style={{fontSize:'small'}} >showPreview({currPost.data, 10})</p>
+                            <p style={{fontSize:'small'}} >showPreview({currPost.data},10)</p>
                         </ListGroup.Item>
                     })}
                 </ListGroup>

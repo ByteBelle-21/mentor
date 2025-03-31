@@ -26,7 +26,7 @@ function Channels(){
 
     const navigateTo = useNavigate();
     const location = useLocation();
-    const {channelFromState} = location.state || {};
+    const { channelFromState, postFromState } = location?.state || {};
 
 
     useEffect(()=>{
@@ -34,6 +34,12 @@ function Channels(){
         getAllChannels();
         if(channelFromState){
             setChannel(channelFromState);
+        }
+        if(postFromState){
+            const searchedPost = document.getElementById(postFromState);
+            if(searchedPost){
+                searchedPost.scrollIntoView({behavior:'smooth'});
+            }
         }
     },[]);
 
@@ -415,6 +421,17 @@ function Channels(){
         navigateTo('/profile',{state:params});
     }
 
+
+    const goToSearchedPost =(channel, postId) =>{
+        closeSearchModal();
+        const params = {
+            channelFromState: channel,
+            postFromState: postId
+        }
+        navigateTo('/channels',{state:params});
+    }
+
+
     return(
        <div className="channel-page">
             <Modal
@@ -622,8 +639,8 @@ function Channels(){
                                 const post = currentChannelDetails[i];
                                 if(post.level === 0){
                                     postsStructure.push(
-                                        <div  className="post-block">
-                                            <Stack direction='horizontal' style={{marginBottom:'2vw'}}>
+                                        <div  className="post-block" >
+                                            <Stack direction='horizontal' style={{marginBottom:'2vw'}} id={post.id}>
                                                 <img src="1.png" style={{width:'2vw'}}></img>
                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                     <div className="fw-bold">{post.name} </div>
@@ -757,7 +774,7 @@ function Channels(){
                                                     const childPost = currentChannelDetails[i];
                                                     nestedReplies.push(
                                                         <div className="reply-block" style={{marginLeft:`${childPost.level * 3}vw`, marginTop:'2vw'}}>
-                                                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}}>
+                                                            <Stack direction='horizontal' style={{marginBottom:'0.5vw'}} id={childPost.id}>
                                                                 <img src={childPost.avatar} style={{width:'1.5vw'}}></img>
                                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                                     <div className="fw-bold">{childPost.name} </div>
@@ -978,7 +995,7 @@ function Channels(){
                                     <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
                                     <ListGroup className='history-list'>
                                         {selectedUserDetails.post.map((post)=>{
-                                            <ListGroup.Item as="li" className='activity-list-item'>
+                                            <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, post.id)}>
                                                 <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
                                                 <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
                                             </ListGroup.Item>

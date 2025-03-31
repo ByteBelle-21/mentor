@@ -25,7 +25,7 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 function Messages(){
 
     const location = useLocation();
-    const {userFromState} = location.state || {};
+    const personFromState = location?.state?.personFromState;
 
     const[currUserDetails, setCurrUserDetails] = useState([]);
     const getCurrUserDertails = async() =>{
@@ -186,14 +186,14 @@ function Messages(){
         if(currUserDetails){
             getAllConnections(currUserDetails.id);
         }
-        if(userFromState){
-            setSelectedUser(user);
+        if(personFromState){
+            setSelectedUser(personFromState);
         }
     },[currUserDetails]);
 
     useEffect(()=>{
         if(connections && connections.length > 0){
-            if(connections[0].username && !userFromState){
+            if(connections[0].username && !personFromState){
                 setSelectedUser(connections[0].username);
             }
         }
@@ -218,6 +218,17 @@ function Messages(){
         const words = text.split(' ');
         return words.slice(0, num).join(' ')+" . . . . . . . .";
     }
+
+    const goToSearchedPost =(channel, postId) =>{
+        closeSearchModal();
+        const params = {
+            channelFromState: channel,
+            postFromState: postId
+        }
+        navigateTo('/channels',{state:params});
+    }
+
+
 
     return(
         <div className="message-page">    
@@ -357,7 +368,7 @@ function Messages(){
                             <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
                             <ListGroup className='history-list'>
                                 {connectedUserDetails.post.map((post)=>{
-                                    <ListGroup.Item as="li" className='activity-list-item'>
+                                    <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, currPost.id)}>
                                         <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div> 
                                         <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>                                            <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
                                     </ListGroup.Item>
