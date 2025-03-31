@@ -80,6 +80,34 @@ function Channels(){
     const fileReplyRef = useRef(null);
     const [showCommentInput, setShowCommentInput] = useState(0);
     
+    const[showWarning, setShowWarning] = useState(false);
+    const [ itemToDelete, setItemToDelete] = useState('');
+    const [ postToDelete, setPostToDelete] = useState(0);
+    const [fromChannel , setFromChannel] = useState("");
+    const [fromChannelId , setFromChannelId] = useState(0);
+    const [ itemToDeleteType, setItemToDeleteType] = useState('');
+
+    const openWarnings = (category, item) =>{
+        if(category === "channel"){
+            setItemToDelete(item);
+        }
+        else{
+            setPostToDelete(item);
+        }
+      
+        setItemToDeleteType(category);
+        setShowWarning(true);
+    }
+
+    const closeWarnings = () =>{
+        setItemToDelete("");
+        setPostToDelete(0);
+        setItemToDeleteType("");
+        setFromChannel("");
+        setFromChannelId(0);
+        setShowWarning(false);
+    }
+
 
     /**
      * Functionality to retrive all details about current logged in user
@@ -134,7 +162,6 @@ function Channels(){
             console.error("Catched axios error during retriving current user details: ",error);
         }
     }
-
    
     // Functionality to retrive all user's who are conncted to logged in user
     const getAllConnections = async(currUser) =>{
@@ -509,6 +536,46 @@ function Channels(){
 
     const[isAdmin, setIsAdmin] =  useState(false);
 
+    const handleAdminDelete = async() =>{
+        if(itemToDeleteType === "channel"){
+            const channel = itemToDelete;
+            const data = {channel};
+            try {
+                const response =  await axios.post(`${window.BASE_URL}/deleteChannel`, data);
+                if (response.status === 200) {
+                    closeWarnings();
+                    getAllChannels();
+                    console.log("Successfully deleted channel");
+                } 
+                else{
+                    console.log(response.message)
+                }
+            } catch (error) {
+                console.error("Catched axios error during deleting channel: ",error);
+            }
+        }
+        else{
+            const postId = postToDelete;
+            const data = {postId};
+            try {
+                const response =  await axios.post(`${window.BASE_URL}/deletePost`, data);
+                if (response.status === 200) {
+                    closeWarnings();
+                    if(channel && currChannelId){
+                        handleChannelSelection(channel, currChannelId);
+                    }
+                    console.log("Successfully deleted post");
+                } 
+                else{
+                    console.log(response.message)
+                }
+            } catch (error) {
+                console.error("Catched axios error during deleting post: ",error);
+            }
+        }
+    }
+
+
     useEffect(()=>{
         if(sessionStorage.getItem('session_user') === "admin"){
             setIsAdmin(true);
@@ -560,11 +627,36 @@ function Channels(){
                     <ListGroup.Item className='channel-item'>
                             <Nav.Link onClick={()=>setChannel("Homepage")}># • Homepage</Nav.Link>
                     </ListGroup.Item>
-                    
+                    <Modal
+                        show={showWarning} 
+                        onHide={()=>closeWarnings()}
+                        size="md"
+                        aria-labelledby="contained-modal-title-vcenter"
+                        centered
+                        >
+                        <Form className='join-form'>
+                            <Stack direction='horizontal' gap={2} className='title_stack'>
+                                <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
+                                {itemToDeleteType === "channel" ?
+                                    `Want to delete Channel ${itemToDelete} ?`
+                                :   `Want to delete post ? ` } 
+                        </Stack>
+                            <p style={{color:'red'}}>Warning ! This step CANNOT be undone !</p>
+                            
+                            <Stack direction='horizontal' gap={4}>
+                                <Button className='warning-button' onClick={()=>setShowWarning(false)}>
+                                    Cancel
+                                </Button>
+                                <Button className='warning-button' onClick={()=>handleAdminDelete()}>
+                                    Delete
+                                </Button>
+                            </Stack>
+                        </Form>
+                    </Modal>
                     {allChannels.length > 0 && allChannels.map((channel)=>(
                          <ListGroup.Item className='channel-item'>
                                 <Nav.Link  onClick={()=>handleChannelSelection(channel.id, channel.name)}> # • {channel.name}</Nav.Link>
-                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons" >delete</span></Nav.Link>}
+                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("channel",channel.name)}> <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>delete</span></Nav.Link>}
                         </ListGroup.Item>
                     ))}
                     
@@ -729,7 +821,7 @@ function Channels(){
                                                     {post.username}
                                                 </div>
                                                 <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
-                                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("post",post.id)}> <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                             </Stack>
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
@@ -871,13 +963,13 @@ function Channels(){
                                                                     {childPost.username}
                                                                 </div>
                                                                 <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(childPost.datetime).toLocaleString()}</p>
-                                                                {isAdmin && <Nav.Link className='ms-auto' > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("post",childPost.id)} > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                                             </Stack>
                                                             <p>{childPost.data}</p>
                                                             <Stack direction="horizontal" gap={3}>
                                                                 {childPost.files.map(file => (
                                                                     
-                                                                    <a href={createURL(childPost.file, childPost.fileType)}
+                                                                    <a href={createURL(file.file, file.fileType)}
                                                                         target="_blank" 
                                                                         rel="noopener noreferrer"
                                                                         style={{ fontSize: 'small', textDecoration: 'none' }}>
@@ -1029,8 +1121,8 @@ function Channels(){
                                 <p>Connections</p>
                             </Stack>
                             <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}></p>
-                                <p>Experties</p>
+                                <p style={{margin:'0', fontWeight:'bold'}}>{currUserDetails.expertise}</p>
+                                <p>Expertise</p>
                             </Stack>
                         </Stack>
                         <Button className='profile-button' onClick={()=> navigateTo('/profile')}>View Profile</Button>
@@ -1072,7 +1164,7 @@ function Channels(){
                                         <p>Connections</p>
                                     </Stack>
                                     <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(selectedUserDetails.userInfo.totalPosts)}</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{selectedUserDetails.userInfo.expertise}</p>
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>

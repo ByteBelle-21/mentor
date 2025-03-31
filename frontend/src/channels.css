@@ -304,3 +304,11 @@
 .tooltip-text:hover{
    transform: scale(1.05);
 }
+
+.warning-button , .warning-button:hover{
+    margin-top: 1vw;
+    width: 100%;
+    background-color: red;
+    border-color: red;
+    font-weight: bolder !important;  
+}

@@ -55,7 +55,6 @@ function Profile(){
             const response =  await axios.post(`${window.BASE_URL}/getUserDetails`, data);
             if (response.status === 200) {
                 setCurrUserDetails(response.data);
-                setNewExpertise(getExpertise(response.data.userInfo.totalPosts));
                 console.log("Successfully retrieved current user details");
             } 
             else{
@@ -74,6 +73,7 @@ function Profile(){
             setNewSkills(currUserDetails.userInfo.skills);
             setNewEmail(currUserDetails.userInfo.email);
             setNewProfession(currUserDetails.userInfo.profession);
+            setNewExpertise(currUserDetails.userInfo.expertise);
         }
         if(currUserDetails.media && currUserDetails.media.length === 3){
             setGotMediaLimit(true);
@@ -292,32 +292,44 @@ function Profile(){
         navigateTo('/messages',{state:params});
     }
 
-    const getExpertise = async(currPosts) =>{
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
-            if (response.status === 200) {
-                const score = (currPosts/response.data)*100;
-                let result = "";
-                if( score < 30 ){
-                    result = 'Begginer';
-                }
-                else if(score >= 30 && score < 60){
-                    result = 'Proficient';
-                }
-                else{
-                    result = 'Expert';
-                }       
-                console.log("Successfully got exertise");
-                return result;
-            } 
-        } catch (error) {
-            console.error("Catched axios error during retriving expertise : ",error);
-            return null;
-        }
+
+    const[isAdmin, setIsAdmin] =  useState(false);
+    const[showWarning, setShowWarning] = useState(false);
+    const [ itemToDelete, setItemToDelete] = useState(0);
+    const [userToDelete, setUserToDelete] = useState("");
+
+    const openWarnings = (userId, username ) =>{ 
+        setItemToDelete(userId);
+        setUserToDelete(username);
+        setShowWarning(true);
+    }
+
+    const closeWarnings = () =>{
+        setItemToDelete(0);
+        setUserToDelete("");
+        setShowWarning(false);
     }
 
 
-    const[isAdmin, setIsAdmin] =  useState(false);
+     const handleAdminDelete = async() =>{
+        const userId = itemToDelete;
+        const data = {userId};
+        try {
+            const response =  await axios.post(`${window.BASE_URL}/deleteUser`, data);
+            if (response.status === 200) {
+                closeWarnings();
+                closeProfileCanvas();
+                getAllPopularUsers();
+                console.log("Successfully deleted user");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during deleting user: ",error);
+        }
+    
+    }
 
     useEffect(()=>{
         if(sessionStorage.getItem('session_user') === "admin"){
@@ -356,8 +368,33 @@ function Profile(){
                                 <p style={{fontWeight:'bold', margin:'0'}}>@{popularUserDetails.userInfo.username}</p>
                                 <p>{popularUserDetails.userInfo.name}</p>
                                 <p>Hello {currUserDetails.userInfo.name}! 👋 Nice to meet you.I am {popularUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                                {isAdmin ? <Button className='send-message-button'>Remove User</Button>:
-                                <Button className='send-message-button' onClick={()=>goToSelectedUserPage(popularUserDetails.userInfo.username)}>Send Message</Button>}
+                                {isAdmin ? <Button className='send-message-button' onClick={()=>openWarnings(popularUserDetails.userInfo.id,popularUserDetails.userInfo.username)}>Remove User</Button>:
+                                    <Button className='send-message-button' onClick={()=>goToSelectedUserPage(popularUserDetails.userInfo.username)}>Send Message</Button>
+                                }
+                                <Modal
+                                    show={showWarning} 
+                                    onHide={()=>closeWarnings()}
+                                    size="md"
+                                    aria-labelledby="contained-modal-title-vcenter"
+                                    centered
+                                    >
+                                    <Form className='join-form'>
+                                        <Stack direction='horizontal' gap={2} className='title_stack'>
+                                            <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
+                                            Want to Remove User {userToDelete} ? 
+                                    </Stack>
+                                        <p style={{color:'red'}}>Warning ! This step CANNOT be undone !</p>
+                                        
+                                        <Stack direction='horizontal' gap={4}>
+                                            <Button className='warning-button' onClick={()=>setShowWarning(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button className='warning-button' onClick={()=>handleAdminDelete()}>
+                                                Delete
+                                            </Button>
+                                        </Stack>
+                                    </Form>
+                                </Modal>
                                 <hr style={{width:'90%'}}></hr>
                                 <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
                                 <Stack direction="horizontal" className='info-stack'>
@@ -370,7 +407,7 @@ function Profile(){
                                         <p>Connections</p>
                                     </Stack>
                                     <Stack className='info-block'>
-                                        <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(popularUserDetails.userInfo.totalPosts)}</p>
+                                        <p style={{margin:'0', fontWeight:'bold'}}>{popularUserDetails.userInfo.expertise}</p>
                                         <p>Experties</p>
                                     </Stack>
                                 </Stack>

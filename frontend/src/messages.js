@@ -264,31 +264,6 @@ function Messages(){
         return URL.createObjectURL(blob);
     }
 
-
-    const getExpertise = async(currPosts) =>{
-        try {
-            const response =  await axios.get(`${window.BASE_URL}/maxPosts`);
-            if (response.status === 200) {
-                const score = (currPosts/response.data)*100;
-                let result = "";
-                if( score < 30 ){
-                    result = 'Begginer';
-                }
-                else if(score >= 30 && score < 60){
-                    result = 'Proficient';
-                }
-                else{
-                    result = 'Expert';
-                }       
-                console.log("Successfully got exertise");
-                return result;
-            } 
-        } catch (error) {
-            console.error("Catched axios error during retriving expertise : ",error);
-            return null;
-        }
-    }
-
     return(
         <div className="message-page">    
             <div className='small-container'>
@@ -426,7 +401,7 @@ function Messages(){
                                 <p>Connections</p>
                             </Stack>
                             <Stack className='info-block'>
-                                <p style={{margin:'0', fontWeight:'bold'}}>{getExpertise(connectedUserDetails.userInfo.totalPosts)}</p>
+                                <p style={{margin:'0', fontWeight:'bold'}}>{connectedUserDetails.userInfo.expertise}</p>
                                 <p>Experties</p>
                             </Stack>
                         </Stack>
