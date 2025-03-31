@@ -597,7 +597,7 @@ app.get('/getChannelPosts',(request, response)=>{
 
 app.get('/searchChannel',(request, response)=>{
     db.query(` SELECT * FROM postForum.channelTable WHERE name LIKE ?`,
-            [ `%${request.body.channel}%`],(error, result)=>{
+            [ `%${request.query.channel}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching channel");
                     return;
@@ -607,8 +607,12 @@ app.get('/searchChannel',(request, response)=>{
 })
 
 
-app.get('/searchPost',(request, response)=>{
-    db.query(` SELECT * FROM postForum.postTable WHERE topic LIKE ? OR data LIKE ?`,
+app.post('/searchPost',(request, response)=>{
+    db.query(` SELECT p.*, c.name AS channel 
+                FROM postForum.postTable p
+                JOIN postForum.channelTable c
+                ON c.id = p.channelId
+                WHERE p.topic LIKE ? OR p.data LIKE ?`,
             [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching post");
@@ -621,7 +625,7 @@ app.get('/searchPost',(request, response)=>{
 
 app.get('/searchPerson',(request, response)=>{
     db.query(` SELECT * FROM postForum.userTable WHERE name LIKE ? OR username LIKE ?`,
-            [`%${request.body.person}%`, `%${request.body.person}%`],(error, result)=>{
+            [`%${request.query.person}%`, `%${request.query.person}%`],(error, result)=>{
                 if(error){
                     response.status(500).send("Server error during searching people");
                     return;
