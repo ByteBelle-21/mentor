@@ -116,15 +116,6 @@ function Channels(){
     useEffect(()=>{
         getCurrUserDertails();
         getAllChannels();
-        if(channelFromState){
-            setChannel(channelFromState);
-        }
-        if(postFromState){
-            const searchedPost = document.getElementById(postFromState);
-            if(searchedPost){
-                searchedPost.scrollIntoView({behavior:'smooth'});
-            }
-        }
     },[]);
 
     
@@ -134,7 +125,13 @@ function Channels(){
             const response =  await axios.get(`${window.BASE_URL}/getAllChannels`);
             if (response.status === 200) {
                 setAllChannels(response.data);
-                console.log("Successfully retrieved all channels details");
+                if(channelFromState){
+                    response.data.map((currChannel)=>{
+                        if(channelFromState === currChannel.name){
+                            handleChannelSelection(currChannel.id, currChannel.name)
+                        }
+                    })
+                }
             } 
             else{
                 console.log(response.message)
@@ -143,6 +140,18 @@ function Channels(){
             console.error("Catched axios error during retriving all channels details: ",error);
         }
     }
+
+    useEffect(()=>{
+        if(postFromState){
+            const searchedPost = document.getElementById(postFromState);
+            console.log("searchedPost",searchedPost);
+            if(searchedPost){
+                searchedPost.scrollIntoView({behavior:'smooth'});
+            }
+        }
+        console.log("Successfully retrieved all channels details");
+    },[currentChannelDetails]);
+
 
     // Functionality to retrieve logged in user's details
     const getCurrUserDertails = async() =>{
@@ -814,7 +823,7 @@ function Channels(){
                                 if(post.level === 0){
                                     postsStructure.push(
                                         <div  className="post-block" >
-                                            <Stack direction='horizontal' style={{marginBottom:'2vw'}} id={post.id}>
+                                            <Stack direction='horizontal' style={{marginBottom:'2vw'}} >
                                                 <img src={post.avatar} style={{width:'2vw'}}></img>
                                                 <div className="ms-2 me-auto" style={{fontSize:'small'}}>
                                                     <div className="fw-bold">{post.name} </div>
@@ -825,7 +834,7 @@ function Channels(){
                                             </Stack>
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
-                                            <p> {post.data}</p>
+                                            <p id={post.id}> {post.data}</p>
                                             <Stack direction="horizontal" gap={3}>
                                                 {post.files.map(file => (
                                                     
@@ -965,7 +974,7 @@ function Channels(){
                                                                 <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(childPost.datetime).toLocaleString()}</p>
                                                                 {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("post",childPost.id)} > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                                             </Stack>
-                                                            <p>{childPost.data}</p>
+                                                            <p id={childPost.id}>{childPost.data}</p>
                                                             <Stack direction="horizontal" gap={3}>
                                                                 {childPost.files.map(file => (
                                                                     

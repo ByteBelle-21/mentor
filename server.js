@@ -374,17 +374,16 @@ app.post('/addMessage',(request, response)=>{
     db.query(`INSERT INTO postForum.messageTable(
         senderId,
         receiverId,
-        message,
-        datetime,
+        message
         )
-        VALUES (?,?,?,?)`,
+        VALUES (?,?,?)`,
       [ request.body.senderId,
         request.body.receiverId,
-        request.body.message,
-        request.body.datetime,
+        request.body.message
       ],
-      error=>{
+      (error, result)=>{
           if(error){
+            console.log(error);
               response.status(500).send("Server error while adding new message");
               return;
           }

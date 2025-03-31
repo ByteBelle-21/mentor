@@ -293,7 +293,7 @@ function Profile(){
      const goToSelectedUserPage = (username)=>{
         closeProfileCanvas();
         const params = {
-            userFromState: username,
+            personFromState: username,
         }
         navigateTo('/messages',{state:params});
     }

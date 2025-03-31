@@ -78,7 +78,7 @@ function Messages(){
                 setConnectedUserDetails(response.data);
                 setSelectedUserId(response.data.userInfo.id);
                 console.log("Successfully retrieved connected  user details",connectedUserDetails);
-                openProfileCanvas();
+               
             } 
             else{
                 console.log(response.message)
@@ -104,8 +104,8 @@ function Messages(){
             });
             if (response.status === 200) {
                 setAllMessages(response.data);
+                setMessage("");
                 console.log("Successfully retrieved all messages",setAllMessages);
-                openMessageCanvas();
             } 
             else{
                 console.log(response.message)
@@ -165,7 +165,7 @@ function Messages(){
             if (response.status === 200) {
                 console.log("Successfully added new message");
                 handleFileUpload(response.data.messageId);
-                getAllMessages(userId);
+                getAllMessages(currUserId);
             } 
             else{
                 console.log(response.message)
@@ -210,30 +210,27 @@ function Messages(){
 
     useEffect(()=>{
         getCurrUserDertails();
+         if(personFromState){
+            setSelectedUser(personFromState);
+            getConnectedUserDetails(personFromState);
+        }
     },[]);
 
     useEffect(()=>{
         if(currUserDetails){
             getAllConnections(currUserDetails.id);
         }
-        if(personFromState){
-            setSelectedUser(personFromState);
-        }
     },[currUserDetails]);
 
     useEffect(()=>{
         if(connections && connections.length > 0){
-            if(connections[0].username && !personFromState){
+            if(!selectedUser){
                 setSelectedUser(connections[0].username);
+                getConnectedUserDetails(connections[0].username);
             }
         }
     },[connections]);
 
-    useEffect(()=>{
-        if(selectedUser){
-            getConnectedUserDetails(selectedUser);
-        }
-    },[selectedUser]);
 
     useEffect(()=>{
         if(connectedUserDetails.userInfo){
@@ -376,7 +373,7 @@ function Messages(){
                         value={message}
                     />
 
-                    <Nav.Link style={{color:'black', marginLeft:'1vh'}} className='text-area-links' onClick={()=>handleNewMessage} >
+                    <Nav.Link style={{color:'black', marginLeft:'1vh'}} className='text-area-links' onClick={()=>handleNewMessage()} >
                         <span class="material-symbols-outlined" >send</span>
                     </Nav.Link> 
                </div>
@@ -388,7 +385,6 @@ function Messages(){
                         <p style={{fontWeight:'bold', margin:'0'}}>@{connectedUserDetails.userInfo.username}</p>
                         <p>{connectedUserDetails.userInfo.name}</p>
                         <p>Hello {currUserDetails.name}! 👋 Nice to meet you.I am {connectedUserDetails.userInfo.profession}! Lets connect and share our ideas.</p>
-                        <Button className='send-message-button'>Send Message</Button>
                         <hr style={{width:'90%'}}></hr>
                         <p style={{fontWeight:'bold'}}>Here are some details about me:</p>
                         <Stack direction="horizontal" className='info-stack'>
@@ -426,7 +422,7 @@ function Messages(){
                                 {connectedUserDetails.post.map((post)=>{
                                     <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, currPost.id)}>
                                         <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div> 
-                                        <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>                                            <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
+                                        <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>  
                                     </ListGroup.Item>
                                 })}
                             </ListGroup>
