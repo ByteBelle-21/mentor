@@ -824,15 +824,114 @@ app.post('/getUserDetails',(request,response)=>{
 
 
 app.get('/maxPosts',(request,response)=>{
-    db.query(`SELECT MAX(totalPosts) AS Score from postForum.userTable ,(error,result)=>{
+    db.query(`SELECT MAX(totalPosts) AS Score from postForum.userTable` ,(error,result)=>{
         if(error){
             response.status(500).send("Server error during retriving max post number");
             return;
         }
         response.status(200).json(result[0].Score);
-    }`)
+    })
 })
 
+
+app.post('/deleteChannel',(request,response)=>{
+    db.query(`DELETE FROM postForum.postTable WHERE channelId = ?`,[request.body.channel],(error,result)=>{
+        if(error){
+            response.status(500).send("Server error during deleting post for given channel");
+            return;
+        }
+        db.query(`DELETE FROM postForum.channelTable WHERE id = ?`,[request.body.channel],(error,channelResult)=>{
+            if(error){
+                response.status(500).send("Server error during deleting channel");
+                return;
+            }
+            response.status(200).send("Successfully deleted channel");
+        })
+    })
+})
+
+app.post('/deletePost',(request,response)=>{
+    db.query(`WITH RECURSIVE deleteTree AS (
+        SELECT 
+            p.id
+        FROM postForum.postTable p
+        WHERE p.id = ?
+        UNION ALL  
+        SELECT 
+            p.id
+        FROM postForum.postTable p
+        INNER JOIN deleteTree pT ON p.replyTo = pT.id
+    )
+    DELETE FROM postForum.postTable WHERE id IN (SELECT id FROM deleteTree)`,
+    [request.body.postId],(error, postResult)=>{
+        if (error){
+            console.log(error);
+            response.status(500).send("Server error during deleting  post");
+            return;
+        }
+        response.status(200).send("Successfully deleted post");
+    })
+})
+
+
+app.post('/deleteUser',(request,response)=>{
+    db.query(`SELECT id FROM postForum.postTable WHERE userId = ?`,[request.body.userId],(error,result)=>{
+        if (error){
+            console.log(error);
+            response.status(500).send("Server error during getting postids while deleting  post");
+            return;
+        }
+        if(result.length > 0){
+            const deletionPromise =  result.map((postId)=>{
+                return new Promise((resolve, reject)=>{
+                    db.query(`WITH RECURSIVE deleteTree AS (
+                        SELECT 
+                            p.id
+                        FROM postForum.postTable p
+                        WHERE p.id = ?
+                        UNION ALL  
+                        SELECT 
+                            p.id
+                        FROM postForum.postTable p
+                        INNER JOIN deleteTree pT ON p.replyTo = pT.id
+                    )
+                    DELETE FROM postForum.postTable WHERE id IN (SELECT id FROM deleteTree)`,[postId],(error, fileResult)=>{
+                        if(error){
+                            reject("Server error during deleting post for selected user");
+                        }
+                    })
+                })
+            })
+            Promise.all(deletionPromise)
+            .then(()=>{
+                db.query(`DELETE FROM postForum.userTable WHERE id=?`,[request.body.userId],(error,userResult)=>{
+                    if (error){
+                        console.log(error);
+                        response.status(500).send("Server error during deleting user profile");
+                        return;
+                    }
+                    response.status(200).send("Successfully deleted profile");
+                })  
+        
+                }
+            )
+            .catch(error=>{
+                console.log("error3" ,error);
+                response.status(500).send("Server error while deleting post for selected user");
+            })
+        }
+        else{
+            db.query(`DELETE FROM postForum.userTable WHERE id=?`,[request.body.userId],(error,userResult)=>{
+                if (error){
+                    console.log(error);
+                    response.status(500).send("Server error during deleting user profile");
+                    return;
+                }
+                response.status(200).send("Successfully deleted profile");
+            }) 
+        }
+    })
+})
 
 
 app.listen(PORT,()=>{
