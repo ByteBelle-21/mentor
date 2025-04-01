@@ -98,6 +98,7 @@ function Messages(){
             if (response.status === 200) {
                 setConnectedUserDetails(response.data);
                 setSelectedUserId(response.data.userInfo.id);
+                setSelectedUser(response.data.userInfo.username);
                 getAllMessages(response.data.userInfo.id);
                 console.log("Successfully retrieved connected  user details",connectedUserDetails);
                
@@ -254,7 +255,7 @@ function Messages(){
                 <ListGroup variant="flush" className='channel-list' >
                     <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages</ListGroup.Item>
                     {connections.length > 0 && connections.map((user)=>(
-                        <ListGroup.Item className='message-item' onClick={()=>setSelectedUser(user.username)}>
+                        <ListGroup.Item className='message-item' onClick={()=>getConnectedUserDetails(user.username)}>
                             <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                             <p style={{margin:'0'}}>{user.name}<p className="view-profile-button">{user.username}</p></p>
                             <p className='ms-auto view-profile-button'>View Message</p>
