@@ -13,10 +13,39 @@ import { useNavigate } from 'react-router-dom';
 
 function Homepage({giveAccess}){
 
+    // Variable used for navigation between pages 
     const navigateTo = useNavigate();
 
+    // Vraiable to display sign/login modals 
     const [showModal, setShowModal] = useState(false);
+    const [showSignupModal, setShowSignupModal] = useState(false);
 
+    // Variables to store user input for signin 
+    const[signUsername, setSignUsername] = useState("");
+    const[signName, setSignName] = useState("");
+    const[signEmail, setSignEmail] = useState("");
+    const[signPassword, setSignPassword] = useState("");
+    const[signProfession, setSignProfession] = useState("");
+    const[signSkills, setSignSkills] = useState("");
+
+    // Variables to store errors during signin 
+    const[sign500Error, setSign500Error] = useState(false);
+    const[sign401Error, setSign401Error] = useState(false);
+    const[signError, setSignError] =  useState(false);
+
+    // Variables to store user input for login 
+    const[logUsername, setLogUsername] = useState("");
+    const[logEmail, setLogEmail] = useState("");
+    const[logPassword, setLogPassword] = useState("");
+ 
+    // Variables to store errors during login 
+    const[log500Error, setLog500Error] = useState(false);
+    const[log401Error, setLog401Error] = useState(false);
+    const[logError, setLogError] =  useState(false);
+
+
+
+    // Funcionality to display login modal
     const openModal =()=>{
         setShowModal(true);
     }
@@ -29,9 +58,13 @@ function Homepage({giveAccess}){
         setShowModal(false);
     }
 
+    const goToLogIn = () =>{
+        closeSignupModal();
+        openModal();
+    }
 
-    const [showSignupModal, setShowSignupModal] = useState(false);
-
+   
+    // Funcionality to display signin modal
     const openSignupModal =()=>{
         setShowSignupModal(true);
     }
@@ -47,7 +80,22 @@ function Homepage({giveAccess}){
         setShowSignupModal(false);
     }
 
+    const goToSignIn = () => {
+        closeModal();
+        openSignupModal();
+    }
 
+     // Functionality to hide login/ signin  errors 
+     const removeErrors = () =>{
+        setLog401Error('');
+        setLog500Error('');
+        setLogError('');
+        setSign401Error('');
+        setSign500Error('');
+        setSignError('');
+    }
+
+    // Variables to manipulate carousel slides 
     const carouselRef = useRef(null);
     const goToNext = () => {
         carouselRef.current.next();
@@ -58,45 +106,7 @@ function Homepage({giveAccess}){
     }
 
 
-    const goToLogIn = () =>{
-        closeSignupModal();
-        openModal();
-    }
-
-    const goToSignIn = () => {
-        closeModal();
-        openSignupModal();
-    }
-
-    const[signUsername, setSignUsername] = useState("");
-    const[signName, setSignName] = useState("");
-    const[signEmail, setSignEmail] = useState("");
-    const[signPassword, setSignPassword] = useState("");
-    const[signProfession, setSignProfession] = useState("");
-    const[signSkills, setSignSkills] = useState("");
-
-    const[sign500Error, setSign500Error] = useState(false);
-    const[sign401Error, setSign401Error] = useState(false);
-    const[signError, setSignError] =  useState(false);
-
-    const[logUsername, setLogUsername] = useState("");
-    const[logEmail, setLogEmail] = useState("");
-    const[logPassword, setLogPassword] = useState("");
- 
-    const[log500Error, setLog500Error] = useState(false);
-    const[log401Error, setLog401Error] = useState(false);
-    const[logError, setLogError] =  useState(false);
-
-
-    const removeErrors = () =>{
-        setLog401Error('');
-        setLog500Error('');
-        setLogError('');
-        setSign401Error('');
-        setSign500Error('');
-        setSignError('');
-    }
-
+    // Sign in functionality 
     const handleSignUp=async()=>{
         const skillsArray = signSkills.split(',').map(item => item.trim()).join(',');
         if(skillsArray.length ==0 || !signUsername || !signEmail || !signPassword || !signName || !signProfession ){
@@ -125,6 +135,7 @@ function Homepage({giveAccess}){
     }
 
 
+    // log in functionality 
     const handleLogIn=async()=>{
         if( !logEmail || !logPassword || !logUsername ){
             setLogError(true);
@@ -149,7 +160,6 @@ function Homepage({giveAccess}){
         }
     }
 
-
     return(
         <div>
              <Modal
@@ -167,9 +177,7 @@ function Homepage({giveAccess}){
                     {log401Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Account doesn't exists with given Email</p>: <></>}
                     {logError ?  <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}>Please fill out all required fields</p>: <></> }
                     <Form.Group className='form-group'>
-                        <Form.Label >
-                            Email
-                        </Form.Label>
+                        <Form.Label >Email</Form.Label>
                         <Form.Control 
                             type='text'
                             style={{borderColor:'red'}}
@@ -178,9 +186,7 @@ function Homepage({giveAccess}){
                             />
                     </Form.Group>
                     <Form.Group className='form-group'>
-                        <Form.Label>
-                            Username
-                        </Form.Label>
+                        <Form.Label>Username</Form.Label>
                         <Form.Control 
                             type='text'
                             style={{borderColor:'#22b6a2'}}
@@ -188,9 +194,7 @@ function Homepage({giveAccess}){
                         />
                     </Form.Group>
                     <Form.Group className='form-group'>
-                        <Form.Label>
-                            Password
-                        </Form.Label>
+                        <Form.Label>Password</Form.Label>
                         <Form.Control
                             type='password' 
                             style={{borderColor:'#ffcc00'}}
@@ -198,17 +202,12 @@ function Homepage({giveAccess}){
                         />
                     </Form.Group>
                     <Stack direction='horizontal' gap={4}>
-                        <Button className='login-button' onClick={closeModal}>
-                            Cancel
-                        </Button>
-                        <Button className='login-button' onClick={handleLogIn}>
-                            Log In
-                        </Button>
+                        <Button className='login-button' onClick={closeModal}>Cancel</Button>
+                        <Button className='login-button' onClick={handleLogIn}>Log In</Button>
                     </Stack>
                     <br></br>
                     <p>Don't have an Account ? <span className='go-to-signin' onClick={goToSignIn}>Sign In</span></p>
-                </Form>
-                
+                </Form>  
             </Modal>
             <Modal
                 show={showSignupModal} 
@@ -227,9 +226,7 @@ function Homepage({giveAccess}){
                         <Carousel.Item>
                             <Form className='join-form'>
                                 <Form.Group className='form-group'>
-                                    <Form.Label >
-                                        Email
-                                    </Form.Label>
+                                    <Form.Label >Email</Form.Label>
                                     <Form.Control
                                         type='email' 
                                         style={{borderColor:'red'}}
@@ -237,9 +234,7 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
-                                    <Form.Label>
-                                        Username
-                                    </Form.Label>
+                                    <Form.Label>Username</Form.Label>
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#22b6a2'}}
@@ -247,9 +242,7 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
-                                    <Form.Label>
-                                        Password
-                                    </Form.Label>
+                                    <Form.Label>Password</Form.Label>
                                     <Form.Control 
                                         type='password'
                                         style={{borderColor:'#ffcc00'}}
@@ -257,12 +250,8 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
-                                    <Button className='login-button' onClick={closeSignupModal}>
-                                        Cancel
-                                    </Button>
-                                    <Button className='login-button' onClick={goToNext}>
-                                        Continue
-                                    </Button>
+                                    <Button className='login-button' onClick={closeSignupModal}>Cancel</Button>
+                                    <Button className='login-button' onClick={goToNext}>Continue</Button>
                                 </Stack>
                                 <br></br>
                                 <p>Already have an Account ? <span className='go-to-signin' onClick={goToLogIn}>Log In</span></p>  
@@ -271,9 +260,7 @@ function Homepage({giveAccess}){
                         <Carousel.Item>
                             <Form className='join-form'>
                                 <Form.Group className='form-group'>
-                                    <Form.Label >
-                                        Full name 
-                                    </Form.Label>
+                                    <Form.Label >Full name </Form.Label>
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'red'}}
@@ -281,9 +268,7 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
-                                    <Form.Label>
-                                        Occupation
-                                    </Form.Label>
+                                    <Form.Label>Occupation</Form.Label>
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#22b6a2'}}
@@ -291,9 +276,7 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
-                                    <Form.Label>
-                                        Skills
-                                    </Form.Label>
+                                    <Form.Label>Skills</Form.Label>
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#ffcc00'}}
@@ -301,12 +284,8 @@ function Homepage({giveAccess}){
                                     />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
-                                    <Button className='login-button' onClick={goToPrev}>
-                                        Go Back
-                                    </Button>
-                                    <Button className='login-button' onClick={handleSignUp}>
-                                        Sign In
-                                    </Button>
+                                    <Button className='login-button' onClick={goToPrev}>Go Back</Button>
+                                    <Button className='login-button' onClick={handleSignUp}>Sign In</Button>
                                 </Stack>
                                 <br></br>
                                 <p>Already have an Account ? <span className='go-to-signin' onClick={goToLogIn}>Log In</span></p> 
@@ -391,7 +370,6 @@ function Homepage({giveAccess}){
             </div>
         </div>
     );
-
 }
 
 export default Homepage;

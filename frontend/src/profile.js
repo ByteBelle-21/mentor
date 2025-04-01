@@ -1,4 +1,3 @@
-
 import './profile.css';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Button from 'react-bootstrap/Button';
@@ -11,33 +10,21 @@ import Col from 'react-bootstrap/Col';
 import InputGroup from 'react-bootstrap/InputGroup';
 import { useState, useRef, useEffect } from 'react';
 import Offcanvas from 'react-bootstrap/Offcanvas';
-import Overlay from 'react-bootstrap/Overlay';
-import Tooltip from 'react-bootstrap/Tooltip';
-import TextareaAutosize from 'react-textarea-autosize';
 import Image from 'react-bootstrap/Image';
 import axios from 'axios';
-import {useAsyncError, useLocation,useNavigate } from 'react-router-dom';
+import {useNavigate } from 'react-router-dom';
 
 function Profile(){
 
+    // Variable used for navigation between pages 
     const navigateTo = useNavigate();
 
-    useEffect(()=>{
-        getCurrUserDertails();
-    },[]);
-
-
+    // Variables used to open/ close different modals such as media/avatar modal or profile canvas
+    const [avatarModal, setAvatarModal] = useState(false);
     const [showMediaModal, setShowMediaModal] = useState(false);
+    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
 
-    const openMediaModal =()=>{
-        setShowMediaModal(true);
-    }
-
-    const closeMediaModal = ()=>{
-        setShowMediaModal(false);
-    }
-
-
+    // Variables to store information about current user
     const [newName, setNewName] = useState('');
     const [newId, setNewId] = useState(0);
     const [newUsername, setNewUsername] = useState('');
@@ -47,8 +34,52 @@ function Profile(){
     const [newEmail, setNewEmail] = useState('');
     const [newExpertise, setNewExpertise] = useState('');
     const [gotMediaLimit,setGotMediaLimit] = useState(false);
-
     const[currUserDetails, setCurrUserDetails] = useState([]);
+
+    // Variables to store information about pupolar users and channels
+    const [popularUserDetails, setpopularUserDetails ] = useState([]);
+    const [popularUsers, setPopularUsers] =  useState([]);
+    const [allPopularChannels, setAllPopularChannels] = useState([]);
+
+    // varible used to check whether user is editing profile or not
+    const[isEditMode, setIsEditMode] = useState(false);
+
+    // Variables to store new avatar for user
+    const [selectedPic, setSelectedPic] = useState(-1);
+
+    // Variables to store information about user's media 
+    const [selectedMediaType, setSelectedMediaType] = useState(0);
+    const [selectedMediaLink, setSelectedMediaLink] = useState('');
+    const [selectedMediaImage, setSelectedMediaImage] = useState('');
+
+    // variables to store information related ro admin's purpose 
+    const[isAdmin, setIsAdmin] =  useState(false);
+    const[showWarning, setShowWarning] = useState(false);
+    const [ itemToDelete, setItemToDelete] = useState(0);
+    const [userToDelete, setUserToDelete] = useState("");
+
+
+    // Functionality to retrieve and store current user's details 
+    useEffect(()=>{
+        getCurrUserDertails();
+    },[]);
+
+    useEffect(()=>{
+        if(currUserDetails.userInfo){
+            setNewName(currUserDetails.userInfo.name);
+            setNewUsername(currUserDetails.userInfo.username);
+            setNewSkills(currUserDetails.userInfo.skills);
+            setNewEmail(currUserDetails.userInfo.email);
+            setNewProfession(currUserDetails.userInfo.profession);
+            setNewExpertise(currUserDetails.userInfo.expertise);
+            SetNewAvatar(currUserDetails.userInfo.avatar);
+            setNewId(currUserDetails.userInfo.id);
+        }
+        if(currUserDetails.media && currUserDetails.media.length === 3){
+            setGotMediaLimit(true);
+        }
+    },[currUserDetails]);
+   
     const getCurrUserDertails = async() =>{
         const username  =  sessionStorage.getItem('session_user');
         const data = { username };
@@ -68,27 +99,15 @@ function Profile(){
     }
 
 
-    useEffect(()=>{
-        if(currUserDetails.userInfo){
-            setNewName(currUserDetails.userInfo.name);
-            setNewUsername(currUserDetails.userInfo.username);
-            setNewSkills(currUserDetails.userInfo.skills);
-            setNewEmail(currUserDetails.userInfo.email);
-            setNewProfession(currUserDetails.userInfo.profession);
-            setNewExpertise(currUserDetails.userInfo.expertise);
-            SetNewAvatar(currUserDetails.userInfo.avatar);
-            setNewId(currUserDetails.userInfo.id);
-        }
-        if(currUserDetails.media && currUserDetails.media.length === 3){
-            setGotMediaLimit(true);
-        }
+    // Functionality to open / close  different modals and offcanvas
+    const openMediaModal =()=>{
+        setShowMediaModal(true);
+    }
 
-    },[currUserDetails]);
-
-
-
-    const [showProfileCanvas, setShowProfileCanvas] = useState(false);
-
+    const closeMediaModal = ()=>{
+        setShowMediaModal(false);
+    }
+  
     const openProfileCanvas =()=>{
         setShowProfileCanvas(true);
     }
@@ -97,13 +116,22 @@ function Profile(){
         setShowProfileCanvas(false);
     }
 
-    const [popularUserDetails, setpopularUserDetails ] = useState([]);
+    const closeAvatarModal = () =>{
+        setAvatarModal(false);
+        setSelectedPic(-1);
+    }
 
+
+    // Functionality to retrieve popular user's details as well as popular channels
     useEffect(()=>{
         console.log("connected users details is ", popularUserDetails.userInfo);
     },[showProfileCanvas]);
 
-    
+    useEffect(()=>{
+        getAllPopularChannels();
+        getAllPopularUsers();
+    },[]);
+
     const getPopularUserDetails = async(user) =>{
         const username  =  user;
         const data = { username };
@@ -122,13 +150,6 @@ function Profile(){
         }
     }
 
-
-    const showPreview =(text, num)=>{
-        const words = text.split(' ');
-        return words.slice(0, num).join(' ')+" . . . . . . . .";
-    }
-
-    const [popularUsers, setPopularUsers] =  useState([]);
     const getAllPopularUsers = async() =>{
         const username  =  sessionStorage.getItem('session_user');
         if(username === "admin"){
@@ -169,7 +190,6 @@ function Profile(){
         }
     }
 
-    const [allPopularChannels, setAllPopularChannels] = useState([]);
     const getAllPopularChannels = async() =>{
         try {
             const response =  await axios.get(`${window.BASE_URL}/activeChannels`);
@@ -185,40 +205,8 @@ function Profile(){
         }
     }
 
-    useEffect(()=>{
-        getAllPopularChannels();
-        getAllPopularUsers();
-    },[]);
 
-   
-
-    const openChannelOnOtherPage = (channel)=>{
-        const params = {
-            channelFromState: channel,
-        }
-        navigateTo('/channels',{state:params});
-    }
-
-    const[isEditMode, setIsEditMode] = useState(false);
-
-    const [avatarModal, setAvatarModal] = useState(false);
-
-    const closeAvatarModal = () =>{
-        setAvatarModal(false);
-        setSelectedPic(-1);
-    }
-
-    const [selectedPic, setSelectedPic] = useState(-1);
-    const handleNewPic = () =>{
-        SetNewAvatar(`/Group${selectedPic}.png`);
-        closeAvatarModal();
-    }
-
-
-    const [selectedMediaType, setSelectedMediaType] = useState(0);
-    const [selectedMediaLink, setSelectedMediaLink] = useState('');
-    const [selectedMediaImage, setSelectedMediaImage] = useState('');
-
+    // Functionality add or remove social media accounts from user's profile 
     const handleNewMedia = async() =>{
         if(!currUserDetails.userInfo){
             return;
@@ -260,7 +248,15 @@ function Profile(){
         }
     }
 
+    
+    // Functionality to store new avatar for user
+    const handleNewPic = () =>{
+        SetNewAvatar(`/Group${selectedPic}.png`);
+        closeAvatarModal();
+    }
 
+
+    // Functionality to save all the changes made to user's profile
     const handleSaveChanges = async() =>{
         const name = newName;
         const username =  newUsername;
@@ -280,6 +276,8 @@ function Profile(){
         }
     }
 
+
+    // Functionality to navigate to selected post 
     const goToSearchedPost =(channel, postId) =>{
         closeProfileCanvas();
         const params = {
@@ -289,20 +287,31 @@ function Profile(){
         navigateTo('/channels',{state:params});
     }
 
-     // Functionallity to navigate to message page and open selected user's profile
-     const goToSelectedUserPage = (username)=>{
-        closeProfileCanvas();
+    // Functionallity to navigate to message page and open selected user's profile
+    const goToSelectedUserPage = (username)=>{
+    closeProfileCanvas();
+    const params = {
+        personFromState: username,
+    }
+    navigateTo('/messages',{state:params});
+    }
+
+    // Functionality to navigate to selected channel 
+    const openChannelOnOtherPage = (channel)=>{
         const params = {
-            personFromState: username,
+            channelFromState: channel,
         }
-        navigateTo('/messages',{state:params});
+        navigateTo('/channels',{state:params});
     }
 
 
-    const[isAdmin, setIsAdmin] =  useState(false);
-    const[showWarning, setShowWarning] = useState(false);
-    const [ itemToDelete, setItemToDelete] = useState(0);
-    const [userToDelete, setUserToDelete] = useState("");
+    // functionality to show / close warnings when admin delete something
+
+    useEffect(()=>{
+        if(sessionStorage.getItem('session_user') === "admin"){
+            setIsAdmin(true);
+        }
+    })
 
     const openWarnings = (userId, username ) =>{ 
         setItemToDelete(userId);
@@ -317,7 +326,8 @@ function Profile(){
     }
 
 
-     const handleAdminDelete = async() =>{
+    // functionality to let admin remove users
+    const handleAdminDelete = async() =>{
         const userId = itemToDelete;
         const data = {userId};
         try {
@@ -334,22 +344,20 @@ function Profile(){
         } catch (error) {
             console.error("Catched axios error during deleting user: ",error);
         }
-    
     }
 
-    useEffect(()=>{
-        if(sessionStorage.getItem('session_user') === "admin"){
-            setIsAdmin(true);
-        }
-    })
+    const showPreview =(text, num)=>{
+        const words = text.split(' ');
+        return words.slice(0, num).join(' ')+" . . . . . . . .";
+    }
 
     return(
         <div className='profile-page'>
            <div className='first-container'>
                 {!isAdmin ?
                     <>
-                    <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
-                    <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
+                        <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>
+                        <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover and connect with professionals who align with your interests.</p>
                     </>
                 :
                     <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # All Users</h6>
@@ -361,8 +369,7 @@ function Profile(){
                             <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getPopularUserDetails(user.username)}>View Profile</p></p>
                             <p className='ms-auto view-profile-button'  onClick={()=>goToSelectedUserPage(user.username)} >Message</p>
                         </ListGroup.Item>
-                    ))}
-    
+                    ))} 
                     <Offcanvas show={showProfileCanvas} onHide={closeProfileCanvas} placement='end'>
                         <Offcanvas.Header >
                         <Offcanvas.Title style={{fontWeight:'bold'}}># User's Profile</Offcanvas.Title>
@@ -424,8 +431,7 @@ function Profile(){
                                             {popularUserDetails.media.map((account)=>{
                                                 <Nav.Link >
                                                     <Image  src={account.image}  className="social-media-img"  roundedCircle />
-                                                </Nav.Link>
-                                                
+                                                </Nav.Link>                       
                                             })}
                                         </Stack>
                                     </>
@@ -451,15 +457,15 @@ function Profile(){
                 </ListGroup>
                 {!isAdmin && 
                     <>
-                    <hr></hr>
-                    <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
-                    <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
-                    <ListGroup variant="flush" className='profile-channel-list'>
-                        {allPopularChannels.length > 0 && allPopularChannels.map((channel)=>(
-                            <ListGroup.Item className='channel-item' onClick={()=>openChannelOnOtherPage(channel.name)}># • {channel.name}</ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </>
+                        <hr></hr>
+                        <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested Channels for you</h6>
+                        <p style={{margin:'0', fontSize:'small',marginLeft:'0.5vw'}}>Discover content from channels you'll love and engage with.</p>
+                        <ListGroup variant="flush" className='profile-channel-list'>
+                            {allPopularChannels.length > 0 && allPopularChannels.map((channel)=>(
+                                <ListGroup.Item className='channel-item' onClick={()=>openChannelOnOtherPage(channel.name)}># • {channel.name}</ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </>
                 }
             </div>
             <div className='profile-div'>
@@ -495,9 +501,7 @@ function Profile(){
                                                 roundedCircle 
                                             />
                                         </Nav.Link>
-                                    
                                     </Col>
-
                                 ))}
                             </Row>
                             <Stack direction='horizontal' gap={4}>
@@ -516,8 +520,7 @@ function Profile(){
                  </>
                  :
                  <Button className='edit-profile-btn' onClick={()=>setIsEditMode(!isEditMode)}>Edit Profile</Button>
-                }
-                
+                }  
                 <Stack direction="horizontal" className='info-stack' style={{marginTop:"2vw"}}>
                         <Stack className='info-block'> 
                             <p style={{margin:'0', fontWeight:'bold'}}>30</p>
@@ -527,7 +530,6 @@ function Profile(){
                             <p style={{margin:'0', fontWeight:'bold'}}>30</p>
                             <p>Connections</p>
                         </Stack>
-                       
                     </Stack>
                 <div className='social-media-block'>
                     <Stack direction='horizontal'>

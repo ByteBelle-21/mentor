@@ -9,22 +9,28 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 function App() {
+
     window.BASE_URL = 'https://psutar9920-4000.theiaopenshiftnext-0-labs-prod-theiaopenshift-4-tor01.proxy.cognitiveclass.ai/';
 
+
+    // ariables to store access information about the current user
     const [access, setAccess] = useState(true);
     const [user, setUser] = useState('');
 
+    // Give access to user to use website 
     const authenticate = (hasAccess, currUser)=>{
         setAccess(hasAccess);
         setUser(currUser);
     }
 
+    // Remove access from user
     const removeAuthentication = () =>{
         setAccess(false);
         setUser('');
         sessionStorage.removeItem('session_user');
     }
 
+    // Save or remove user's information in sessionStorage
     useEffect(()=>{
         if(user){
             sessionStorage.setItem('session_user', user);
@@ -37,13 +43,13 @@ function App() {
     return (
         <>
             <Router>
-            <Navlink removeAccess={removeAuthentication}></Navlink> 
-            <Routes>
-                <Route path="/" element={<Homepage  giveAccess={authenticate}/>}/>
-                <Route path="/channels" element={ access ? <Channels/> : <Navigate to="/"/>}/>
-                <Route path="/profile" element={access ? <Profile/> :<Navigate to="/"/> }/>
-                <Route path="/messages" element={access ? <Messages/> : <Navigate to="/" />} />
-            </Routes>
+                <Navlink removeAccess={removeAuthentication}></Navlink> 
+                <Routes>
+                    <Route path="/" element={<Homepage  giveAccess={authenticate}/>}/>
+                    <Route path="/channels" element={ access ? <Channels/> : <Navigate to="/"/>}/>
+                    <Route path="/profile" element={access ? <Profile/> :<Navigate to="/"/> }/>
+                    <Route path="/messages" element={access ? <Messages/> : <Navigate to="/" />} />
+                </Routes>
             </Router>
         </>
   );

@@ -11,11 +11,21 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import axios from 'axios';
 
 function Navlink({removeAccess}){
+
+    // Variable used for navigation between pages 
     const location = useLocation();
     const navigateTo = useNavigate();
     const isLandingPage = location.pathname === "/";
 
+    // Variables to store user inout for search as well as search results 
+    const [searchType, setSearchType] = useState(0);
+    const [searchData, setSearchData] = useState('');
+    const[searchPostResult, setSearchPostResult] = useState([]);
+    const[searchPeopleResult, setSearchPeopleResult] = useState([]);
+    const[searchChannelResult, setSearchChannelResult] = useState([]);
 
+
+    // Functionality to open / close search modal
     const [showSearchModal, setShowSearchModal] = useState(false);
 
     const openSearchModal =()=>{
@@ -32,13 +42,7 @@ function Navlink({removeAccess}){
     }
 
 
-    const [searchType, setSearchType] = useState(0);
-    const [searchData, setSearchData] = useState('');
-
-    const[searchPostResult, setSearchPostResult] = useState([]);
-    const[searchPeopleResult, setSearchPeopleResult] = useState([]);
-    const[searchChannelResult, setSearchChannelResult] = useState([]);
-
+    // Functionality to search post, channel or people 
     useEffect(()=>{
         console.log("Searched channel result is ", searchChannelResult);
     },[searchChannelResult]);
@@ -51,8 +55,25 @@ function Navlink({removeAccess}){
         console.log("Searched person result is ", searchPeopleResult);
     },[searchPeopleResult]);
 
+    useEffect(()=>{
+        handleSearch();
+    },[searchData]);
+
+    const handleSearch = ()=>{
+        console.log("search data is ",searchData );
+        console.log("search type is ",searchType ); 
+        if(searchType === 1){
+           handlePostSearch();
+        }
+        else if(searchType  === 2){
+            handlePersonSearch();
+        }
+        else if(searchType === 3){
+           handleChannelSearch();
+        }
+    }
+   
     const handlePostSearch = async () =>{
-        
         const post = searchData;
         const data = {post};
         try {
@@ -88,9 +109,7 @@ function Navlink({removeAccess}){
         }
     }
 
-
     const handleChannelSearch = async () =>{
-
         try {
             const response =  await axios.get(`${window.BASE_URL}/searchChannel`,{
                 params:{
@@ -110,25 +129,7 @@ function Navlink({removeAccess}){
     }
     
 
-    const handleSearch = ()=>{
-        console.log("search data is ",searchData );
-        console.log("search type is ",searchType ); 
-        if(searchType === 1){
-           handlePostSearch();
-        }
-        else if(searchType  === 2){
-            handlePersonSearch();
-        }
-        else if(searchType === 3){
-           handleChannelSearch();
-        }
-    }
-
-
-    useEffect(()=>{
-        handleSearch();
-    },[searchData]);
-
+    // Navigate to searched channel  
     const goToSearchedChannel =(channel) =>{
         closeSearchModal();
         const params = {
@@ -137,6 +138,7 @@ function Navlink({removeAccess}){
         navigateTo('/channels',{state:params});
     }
 
+    // Navigate to searched user profile  
     const goToSearchedPerson =(person) =>{
         closeSearchModal();
         const params = {
@@ -145,6 +147,7 @@ function Navlink({removeAccess}){
         navigateTo('/messages',{state:params});
     }
 
+    // Navigate to searched post  
     const goToSearchedPost =(channel, postId) =>{
         closeSearchModal();
         const params = {
@@ -154,12 +157,12 @@ function Navlink({removeAccess}){
         navigateTo('/channels',{state:params});
     }
 
+
+    // Functionality to show preview of post
     const showPreview =(text, num)=>{
         const words = text.split(' ');
         return words.slice(0, num).join(' ')+" . . . . . . . .";
     }
-
-
 
     return(
         <>
@@ -184,9 +187,7 @@ function Navlink({removeAccess}){
                             Search Post, Channel and People
                         </Stack>
                         <Form.Group className='form-group' style={{marginTop:'1vw'}}>
-                            <Form.Label >
-                                Select Category
-                            </Form.Label>
+                            <Form.Label >Select Category</Form.Label>
                             <Form.Select aria-label="Default select example" style={{borderColor:'blue'}} onChange={(e)=>setSearchType(Number(e.target.value))}>
                                 <option>Open this select menu</option>
                                 <option value="1">Post</option>
@@ -195,12 +196,9 @@ function Navlink({removeAccess}){
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className='form-group'>
-                            <Form.Label >
-                                Put what you remember 
-                            </Form.Label>
+                            <Form.Label >Put what you remember </Form.Label>
                             <Form.Control style={{borderColor:'red'}} value={searchData} onChange={(e)=>setSearchData(e.target.value)}/>
                         </Form.Group>
-                        
                         <div className='search-results'>
                             <p style={{fontWeight:'bold'}}># Search Results</p>
                             <hr style={{margin:'0'}}></hr>
@@ -224,7 +222,6 @@ function Navlink({removeAccess}){
                                         <ListGroup.Item className='nav-message-item' onClick={()=>goToSearchedPerson(person.username)}>
                                             <img src={person.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                                             <p style={{margin:'0'}}>{person.name}<p className="view-profile-button">{person.username}</p></p>
-                                            
                                         </ListGroup.Item>
                                     )
                                 })}
@@ -232,14 +229,11 @@ function Navlink({removeAccess}){
                             </div>
                         </div>
                     </Form>
-                   
                 </Modal>
                 <Button className='logout-button' onClick={()=>removeAccess()}>Log Out</Button>
             </Stack>    
-            
             :<></>}
         </>
-       
     )
 }
 

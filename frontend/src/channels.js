@@ -80,6 +80,9 @@ function Channels(){
     const fileReplyRef = useRef(null);
     const [showCommentInput, setShowCommentInput] = useState(0);
     
+
+    // Variables to store information about channel, post or poeple deletion
+    // Admin uses this functions to delete channel, post or poeple
     const[showWarning, setShowWarning] = useState(false);
     const [ itemToDelete, setItemToDelete] = useState('');
     const [ itemToDeleteId, setItemToDeleteId] = useState(0);
@@ -87,6 +90,8 @@ function Channels(){
     const [fromChannelId , setFromChannelId] = useState(0);
     const [ itemToDeleteType, setItemToDeleteType] = useState('');
 
+
+    // Open or close  warnings when admin wants to delete channel, post or poeple
     const openWarnings = (category, item, itemId) =>{
         if(category === "channel"){
             setItemToDelete(item);
@@ -110,6 +115,7 @@ function Channels(){
     }
 
 
+
     /**
      * Functionality to retrive all details about current logged in user
      * as well as retrieve all channels, or go to searched post 
@@ -124,6 +130,7 @@ function Channels(){
         getAllChannels();  
     },[location.state]);
    
+    
     // Functionality to retrive all channels
     const getAllChannels = async() =>{
         try {
@@ -146,6 +153,8 @@ function Channels(){
         }
     }
 
+
+    // Functionality to scroll to required post for search purpose
     useEffect(()=>{
         if(postFromState){
             const searchedPost = document.getElementById(postFromState);
@@ -547,7 +556,17 @@ function Channels(){
         }
     }
 
+
+    /**
+     * Functionality to check whether current user is admin
+     * and let admin delete post, people and channel
+     */ 
     const[isAdmin, setIsAdmin] =  useState(false);
+    useEffect(()=>{
+        if(sessionStorage.getItem('session_user') === "admin"){
+            setIsAdmin(true);
+        }
+    })
 
     const handleAdminDelete = async() =>{
         if(itemToDeleteType === "channel"){
@@ -589,13 +608,6 @@ function Channels(){
         }
     }
 
-
-    useEffect(()=>{
-        if(sessionStorage.getItem('session_user') === "admin"){
-            setIsAdmin(true);
-        }
-    })
-
     return(
        <div className="channel-page">
             <Modal
@@ -614,28 +626,21 @@ function Channels(){
                     {channel500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
                     {channel401Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Channel with given name already exists</p>: <></>}
                     <Form.Group className='form-group'>
-                        <Form.Label >
-                            Channel Name
-                        </Form.Label>
+                        <Form.Label >Channel Name</Form.Label>
                         <Form.Control 
                             type='text'
                             style={{borderColor:'red'}}
                             onChange={(e)=>{setChannelName(e.target.value),closeChannelErrors()}}    
                         />
                     </Form.Group>
-                   
                     <Stack direction='horizontal' gap={4}>
-                        <Button className='channel-form-button' onClick={closeChannelModal}>
-                            Cancel
-                        </Button>
-                        <Button className='channel-form-button' onClick={addChannel}>
-                            Create
-                        </Button>
+                        <Button className='channel-form-button' onClick={closeChannelModal}>Cancel</Button>
+                        <Button className='channel-form-button' onClick={addChannel}>Create</Button>
                     </Stack>
                 </Form>
             </Modal>
             <div className='small-container'>
-                <Button className='channel-button' onClick={openChannelModal}> <span class="material-symbols-outlined"> add </span>  New Channel</Button>
+                <Button className='channel-button' onClick={openChannelModal}><span class="material-symbols-outlined"> add </span>  New Channel</Button>
                 <ListGroup variant="flush" className='channel-list' >
                     <ListGroup.Item> # • All Channels</ListGroup.Item>
                     <ListGroup.Item className='channel-item'>
@@ -651,29 +656,24 @@ function Channels(){
                         <Form className='join-form'>
                             <Stack direction='horizontal' gap={2} className='title_stack'>
                                 <span class="material-symbols-outlined icons" style={{fontSize:'2vw'}}>groups</span>
-                                {itemToDeleteType === "channel" ?
-                                    `Want to delete Channel ${itemToDelete} ?`
-                                :   `Want to delete post ? ` } 
-                        </Stack>
+                                {itemToDeleteType === "channel" ?`Want to delete Channel ${itemToDelete} ?`:`Want to delete post ? `} 
+                            </Stack>
                             <p style={{color:'red'}}>Warning ! This step CANNOT be undone !</p>
-                            
                             <Stack direction='horizontal' gap={4}>
-                                <Button className='warning-button' onClick={()=>setShowWarning(false)}>
-                                    Cancel
-                                </Button>
-                                <Button className='warning-button' onClick={()=>handleAdminDelete()}>
-                                    Delete
-                                </Button>
+                                <Button className='warning-button' onClick={()=>setShowWarning(false)}>Cancel</Button>
+                                <Button className='warning-button' onClick={()=>handleAdminDelete()}>Delete</Button>
                             </Stack>
                         </Form>
                     </Modal>
                     {allChannels.length > 0 && allChannels.map((channel)=>(
                          <ListGroup.Item className='channel-item'>
-                                <Nav.Link  onClick={()=>handleChannelSelection(channel.id, channel.name)}> # • {channel.name}</Nav.Link>
-                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("channel",channel.name,channel.id)}> <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                            <Nav.Link  onClick={()=>handleChannelSelection(channel.id, channel.name)}> # • {channel.name}</Nav.Link>
+                            {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("channel",channel.name,channel.id)}>
+                                <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>delete</span>
+                                </Nav.Link>
+                            }
                         </ListGroup.Item>
-                    ))}
-                    
+                    ))}      
                 </ListGroup>
             </div>
             <div className='large-container'>
@@ -780,17 +780,11 @@ function Channels(){
                         <Stack direction='horizontal' gap={4}>
                             { channel !== "Homepage" ? 
                                 <>
-                                    <Button className='channel-form-button' onClick={closePostModal}>
-                                        Cancel
-                                    </Button>
-                                    <Button className='channel-form-button' onClick={handleNewPost}>
-                                        Create
-                                    </Button>
+                                    <Button className='channel-form-button' onClick={closePostModal}>Cancel</Button>
+                                    <Button className='channel-form-button' onClick={handleNewPost}>Create</Button>
                                 </>
                                 :
-                                <Button className='channel-form-button' onClick={closePostModal}>
-                                        Close
-                                </Button>
+                                <Button className='channel-form-button' onClick={closePostModal}>Close</Button>
                             }
                         </Stack>
                     </Form>
@@ -835,21 +829,22 @@ function Channels(){
                                                     {post.username}
                                                 </div>
                                                 <p className="ms-auto" style={{fontSize:'small', marginRight:'1vw'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
-                                                {isAdmin && <Nav.Link onClick={()=>openWarnings("post","",post.id)}> <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                                {isAdmin && <Nav.Link onClick={()=>openWarnings("post","",post.id)}> 
+                                                    <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span>
+                                                    </Nav.Link>
+                                                }
                                             </Stack>
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
                                             <p id={post.id}> {post.data}</p>
                                             <Stack direction="horizontal" gap={3}>
-                                                {post.files.map(file => (
-                                                    
+                                                {post.files.map(file => (                               
                                                     <a href={createURL(file.file, file.fileType)}
                                                         target="_blank" 
                                                         rel="noopener noreferrer"
                                                         style={{ fontSize: 'small', textDecoration: 'none' }}>
                                                         {file.fileName}
-                                                    </a>
-                                               
+                                                    </a>                                             
                                                 ))}
                                              </Stack>
                                             <Stack direction='horizontal' gap={3} style={{ alignItems:'center'}}>
@@ -1218,5 +1213,4 @@ function Channels(){
        </div>
     )
 }
-
 export default Channels;

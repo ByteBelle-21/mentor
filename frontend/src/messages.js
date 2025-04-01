@@ -1,37 +1,57 @@
 import './messages.css';
 import './channels.css';
-import Button from 'react-bootstrap/Button';
 import './homepage.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Stack from 'react-bootstrap/Stack';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
 import ListGroup from 'react-bootstrap/ListGroup';
-import Offcanvas from 'react-bootstrap/Offcanvas';
 import Image from 'react-bootstrap/Image';
 import Nav from 'react-bootstrap/Nav';
 import TextareaAutosize from 'react-textarea-autosize';
 import Overlay from 'react-bootstrap/Overlay';
-import Tooltip from 'react-bootstrap/Tooltip';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';               
-import FloatingLabel from 'react-bootstrap/FloatingLabel';
 
 
 function Messages(){
 
+    // Variable used for navigation between pages 
     const navigateTo = useNavigate();
+    const location = useLocation();
+    const personFromState = location?.state?.personFromState;
+
+    // Variables to store current user and selected user's id and username 
     const [selectedUser, setSelectedUser] = useState('');
     const [currUserId, setCurrUserId] = useState('');
     const [selectedUserId, setSelectedUserId] = useState(0);
 
-    const location = useLocation();
-    const personFromState = location?.state?.personFromState;
+    // Variable to store current user's details, users's connections 
+    const[currUserDetails, setCurrUserDetails] = useState([]);
+    const [connections, setConnections] =  useState([]);
 
+    // Variables to store connected user's details and all message
+    const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
+    const [allMessages, setAllMessages] = useState([]);
+
+    // Variables to store state of emoji popover 
+    const msgEmojiTarget =  useRef(null);
+    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
+
+    // Variables to store reference to text area , as well as input message 
+    const msgTextAreaRef = useRef(null);
+    const [message, setMessage] = useState('');
+ 
+    // Variables to store reference to file input area as well as file input  
+    const msgFileRef = useRef(null);
+    const msgFilePopoverTarget = useRef(null);
+    const [showFileMsgPopover, setShowFileMsgPopover] =  useState(false);
+    const [msgFiles, setMsgFiles] =  useState([]);
+
+
+    // Retrieve all the information about current user as well as selected user
     useEffect(()=>{
         getCurrUserDertails();
          if(personFromState){
@@ -40,10 +60,6 @@ function Messages(){
         }
     },[]);
 
-   
-
-
-    const[currUserDetails, setCurrUserDetails] = useState([]);
     const getCurrUserDertails = async() =>{
         const username  =  sessionStorage.getItem('session_user');
         const data = { username };
@@ -63,7 +79,8 @@ function Messages(){
         }
     }
 
-    const [connections, setConnections] =  useState([]);
+
+    // Functionality to retrieve all connections of current user
     const getAllConnections = async(currUser) =>{
         try {
             const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUser}});
@@ -87,8 +104,7 @@ function Messages(){
     }
 
 
-    const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
-
+    // Functionality to retrieve all details of connected  user
     useEffect(()=>{
         console.log("connected users details is ", connectedUserDetails.userInfo);
     },[]);    
@@ -115,8 +131,7 @@ function Messages(){
     }
 
 
-
-    const [allMessages, setAllMessages] = useState([]);
+    // Functionality to retrieve all messages between current user and selected user
     const getAllMessages = async(connectedUserId) =>{ 
         try {
             const response =  await axios.get(`${window.BASE_URL}/getAllMessages`, {
@@ -139,16 +154,7 @@ function Messages(){
     }
 
 
-    const msgEmojiTarget =  useRef(null);
-    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
-    const msgTextAreaRef = useRef(null);
-    const [message, setMessage] = useState('');
-    const [showFileMsgPopover, setShowFileMsgPopover] =  useState(false);
-    const [msgFiles, setMsgFiles] =  useState([]);
-
-    const msgFileRef = useRef(null);
-    const msgFilePopoverTarget = useRef(null);
-
+    // Functionality to handle file input as well as file deletion
     const handleFileInput =(event)=>{
         const files = event.target.files;
         if (files) {
@@ -168,6 +174,7 @@ function Messages(){
     },[msgFiles.length])
 
 
+    // Functionality to handle emoji input 
     const handleMsgEmojiInput =(emoji) =>{
         const cursor = msgTextAreaRef.current.selectionStart;
         const newData = message.slice(0,cursor) + emoji.native + message.slice(cursor);
@@ -176,6 +183,8 @@ function Messages(){
         msgTextAreaRef.current.focus();
     }
 
+
+    // Functionality to store new post along with input files 
     const handleNewMessage = async() =>{
         if(!message ){
             return;
@@ -226,12 +235,13 @@ function Messages(){
     }
 
 
-
+    // Functionality to show preview of post
     const showPreview =(text, num)=>{
         const words = text.split(' ');
         return words.slice(0, num).join(' ')+" . . . . . . . .";
     }
 
+    // Navigate to selected post 
     const goToSearchedPost =(channel, postId) =>{
         const params = {
             channelFromState: channel,
@@ -240,7 +250,7 @@ function Messages(){
         navigateTo('/channels',{state:params});
     }
 
-    
+    // Create URL for file 
     const createURL = (fileData, fileType) =>{
         const file = new Uint8Array(fileData.data);
         const blob = new Blob([file], { type: fileType });
@@ -264,38 +274,36 @@ function Messages(){
             <div className='messsage-large-container'>
                 <div className='message-container'>
                     {allMessages.length > 0 && allMessages.map(currMessage=>(
-
-                            currMessage.senderId === selectedUser ?
-                            <div className='received-msg'>
-                                <p>{currMessage.message}</p>
-                                <Stack direction="horizontal" gap={3}>
-                                    {currMessage.files.map(file => (
-                                        <a href={createURL(file.file, file.fileType)}
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            style={{ fontSize: 'small', textDecoration: 'none' }}>
-                                            {file.fileName}
-                                        </a>
-                                    
-                                    ))}
-                                </Stack>
-                            </div>
-                            :
-                            <div className='sent-msg'>
-                                <p>{currMessage.message}</p>
-                                <Stack direction="horizontal" gap={3}>
-                                    {currMessage.files.map(file => (
-                                        <a href={createURL(file.file, file.fileType)}
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            style={{ fontSize: 'small', textDecoration: 'none' }}>
-                                            {file.fileName}
-                                        </a>
-                                    
-                                    ))}
-                                </Stack>
-                            </div>
-                            ))
+                        currMessage.senderId === selectedUser ?
+                        <div className='received-msg'>
+                            <p>{currMessage.message}</p>
+                            <Stack direction="horizontal" gap={3}>
+                                {currMessage.files.map(file => (
+                                    <a href={createURL(file.file, file.fileType)}
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                        {file.fileName}
+                                    </a>
+                                ))}
+                            </Stack>
+                        </div>
+                        :
+                        <div className='sent-msg'>
+                            <p>{currMessage.message}</p>
+                            <Stack direction="horizontal" gap={3}>
+                                {currMessage.files.map(file => (
+                                    <a href={createURL(file.file, file.fileType)}
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                        {file.fileName}
+                                    </a>
+                                
+                                ))}
+                            </Stack>
+                        </div>
+                        ))
                     }
                 </div>
                 <div className='textarea-msg-block'>      
@@ -309,15 +317,13 @@ function Messages(){
                             </Badge>
                         </Nav.Link>
                     }
-
                     <Overlay target={msgFilePopoverTarget} show={showFileMsgPopover} placement='top'>
                         <Popover id="popover-basic"> 
                             <ListGroup as="ol" numbered> 
                             {msgFiles.length > 0 && msgFiles.map((file)=>(
                                 <ListGroup.Item
                                 as="li"
-                                className="d-flex justify-content-between align-items-start"
-                                >                                        
+                                className="d-flex justify-content-between align-items-start">                                        
                                     <div className="fw-bold">{file.name}</div>                                
                                     <Nav.Link style={{marginLeft:'2vw'}} onClick={()=>handleFileDelete(file.name, true, false, false)} >
                                         <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>close</span>
@@ -329,21 +335,20 @@ function Messages(){
                     </Overlay>
                     <Nav.Link className='file-link' 
                         style={{color:'black', marginRight:'1vh', opacity:'70%'}} 
-                          onClick={() => msgFileRef.current.click()}
-                        >
+                          onClick={() => msgFileRef.current.click()}>
                         <span class="material-symbols-outlined">add</span>
                     </Nav.Link> 
-                     <input 
+                    <input 
                         type='file' 
                         style={{ display: 'none' }}
                         ref={msgFileRef}
                         onChange={(e) => handleFileInput(e)}
                     />
-                     <Nav.Link 
+                    <Nav.Link 
                         style={{color:'black', marginRight:'1vh', opacity:'70%'}} 
                         ref={msgEmojiTarget} 
                         onClick={()=> setShowMsgEmoji(!showMsgEmoji)}>
-                        <span class="material-symbols-outlined">add_reaction</span>
+                    <span class="material-symbols-outlined">add_reaction</span>
                     </Nav.Link> 
                     <Overlay target={msgEmojiTarget} show={showMsgEmoji} placement='top'>
                         <Popover id="popover-basic">
@@ -357,7 +362,6 @@ function Messages(){
                         onChange={(e)=>setMessage(e.target.value)}
                         value={message}
                     />
-
                     <Nav.Link style={{color:'black', marginLeft:'1vh'}} className='text-area-links' onClick={()=>handleNewMessage()} >
                         <span class="material-symbols-outlined" >send</span>
                     </Nav.Link> 
@@ -394,7 +398,6 @@ function Messages(){
                                         <Nav.Link >
                                             <Image  src={account.image}  className="social-media-img"  roundedCircle />
                                         </Nav.Link>
-                                        
                                     })}
                                 </Stack>
                             </>
@@ -418,7 +421,6 @@ function Messages(){
             </div>
         </div>
     );
-
 }
 
 export default Messages;

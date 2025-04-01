@@ -5,13 +5,10 @@ const mysql = require('mysql2');
 const PORT = 4000;
 const app = express();
 const multer = require('multer');
-const e = require('express');
 const upload = multer({ storage: multer.memoryStorage() });
 
 
-app.use(cors({
-       origin: '*'
-}));
+app.use(cors({origin: '*'}));
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 
@@ -165,9 +162,6 @@ db.getConnection((err,connection)=>{
             });
         }
     });
-
-    
-
 });
 
 
@@ -324,138 +318,7 @@ app.get('/getConnectedUsers',(request,response)=>{
 })
 
 
-// Retrive messages between current login user and selected user
-app.get('/getAllMessages',(request,response)=>{
-    db.query(`SELECT id FROM postForum.userTable WHERE username = ? ` ,[request.query.currUser],(error, result)=>{
-        if(error){
-            console.log("error1" ,error);
-            response.status(500).send("Server error during retriving id of current user for getting all messages");
-            return;
-        }
-        db.query(`SELECT * FROM postForum.messageTable
-              WHERE senderId=? AND receiverId=? 
-              OR senderId=? AND receiverId=? 
-              ORDER BY datetime`,
-              [result[0].id, request.query.otherUser, request.query.otherUser,result[0].id],
-              (error, messageResult)=>{
-                if(error){
-                    console.log("error2" ,error);
-                    response.status(500).send("Server error during retriving all messages");
-                    return;
-                }
-                const messagesPromise =  messageResult.map(message=>{
-                    return new Promise((resolve, reject)=>{
-                        db.query(`SELECT * FROM postForum.fileTable WHERE messageId=?`,[message.id],(error, fileResult)=>{
-                            if(error){
-                                reject("Server error during retriving all files related to current message");
-                            }
-                            else{
-                                resolve({...message,files:fileResult.length> 0? fileResult:[]})
-                            }
-                        })
-                    })
-                })
-                Promise.all(messagesPromise)
-                .then(messagesWithFiles=>{
-                    response.status(200).json(messagesWithFiles);
-                })
-                .catch(error=>{
-                    console.log("error3" ,error);
-                    response.status(500).send("Server error during retriving all messages with their files");
-                })
-            })
-    })
-    
-})
-
-
-// Add new message
-app.post('/addMessage',(request, response)=>{
-    db.query(`INSERT INTO postForum.messageTable(
-        senderId,
-        receiverId,
-        message
-        )
-        VALUES (?,?,?)`,
-      [ request.body.senderId,
-        request.body.receiverId,
-        request.body.message
-      ],
-      (error, result)=>{
-          if(error){
-            console.log(error);
-              response.status(500).send("Server error while adding new message");
-              return;
-          }
-          afterMsgUpload(request.body.senderId, request.body.receiverId);
-          response.status(200).json({ messageId: result.insertId });
-      })
-})
-
-
-function afterMsgUpload(sender, receiver){
-    db.query(`SELECT * FROM postForum.messageTable 
-              WHERE (senderId=? AND receiverId=?)
-              OR
-              (senderId=? AND receiverId=?)`,
-            [ sender, receiver, receiver,sender],
-            (error, result)=>{
-                if(error){
-                    response.status(500).send("Server error while checking whether new connection or not");
-                    return;
-                } 
-                if(result.length == 0){
-                    db.query(` UPDATE postForum.userTable SET connections = IFNULL(connections, 0) + 1 WHERE id = ? OR id =?`,[sender, receiver],error=>{
-                        if(error){
-                            console.error("Server error during updating connections in postForum.userTable");
-                            return;
-                        }
-                        console.log("Successfully updated connections in postForum.userTable");
-                    });
-                }
-            })
-}
-
-
-app.post('/addPost',(request, response)=>{
-    let parentLevel = -1;
-    if(request.body.replyTo != 0){
-        db.query(`SELECT level FROM postForum.postTable WHERE id =?`,[request.body.replyTo],(error, levelResult)=>{
-            if(error){
-                response.status(500).send("Server error during retriving parent post level while adding new post");
-                return;
-            }
-            parentLevel = levelResult[0].level;
-        })
-    }
-    db.query(`INSERT INTO postForum.postTable(
-              userId,
-              channelId,
-              replyTo,
-              topic,
-              data,
-              level
-              )
-              VALUES (?,?,?,?,?,?)`,
-            [ request.body.userId,
-              request.body.channelId,
-              request.body.replyTo,
-              request.body.topic,
-              request.body.data,
-              (parentLevel + 1)
-            ], 
-            (error, result)=>{
-                if(error){
-                    console.log(error);
-                    response.status(500).send("Server error while adding new post");
-                    return;
-                }
-                afterPostUpload( request.body.userId, request.body.channelId);
-                response.status(200).json({ postId: result.insertId });
-               
-            })
-})
-
+// upload files for post or message
 app.post('/uploadFiles',upload.array('allFiles'),(request, response)=>{
     const filePromise = request.files.map((file)=>{
         return new Promise((resolve,reject)=>{
@@ -496,7 +359,7 @@ app.post('/uploadFiles',upload.array('allFiles'),(request, response)=>{
     
 })
 
-
+// Update usetable and channel table after adding post 
 function afterPostUpload(user,channel){
     db.query(` UPDATE postForum.channelTable SET totalPosts = IFNULL(totalposts, 0) + 1 WHERE id = ?`,[channel],error=>{
         if(error){
@@ -535,8 +398,7 @@ function afterPostUpload(user,channel){
     })
 }
 
-
-
+// Get all post for given channel
 app.get('/getChannelPosts',(request, response)=>{
     const channelId = request.query.channel;
     db.query(`WITH RECURSIVE postTree AS (
@@ -626,49 +488,51 @@ app.get('/getChannelPosts',(request, response)=>{
 })
 
 
-app.get('/searchChannel',(request, response)=>{
-    db.query(` SELECT * FROM postForum.channelTable WHERE name LIKE ?`,
-            [ `%${request.query.channel}%`],(error, result)=>{
+
+app.post('/addPost',(request, response)=>{
+    let parentLevel = -1;
+    if(request.body.replyTo != 0){
+        db.query(`SELECT level FROM postForum.postTable WHERE id =?`,[request.body.replyTo],(error, levelResult)=>{
+            if(error){
+                response.status(500).send("Server error during retriving parent post level while adding new post");
+                return;
+            }
+            parentLevel = levelResult[0].level;
+        })
+    }
+    db.query(`INSERT INTO postForum.postTable(
+              userId,
+              channelId,
+              replyTo,
+              topic,
+              data,
+              level
+              )
+              VALUES (?,?,?,?,?,?)`,
+            [ request.body.userId,
+              request.body.channelId,
+              request.body.replyTo,
+              request.body.topic,
+              request.body.data,
+              (parentLevel + 1)
+            ], 
+            (error, result)=>{
                 if(error){
                     console.log(error);
-                    response.status(500).send("Server error during searching channel");
+                    response.status(500).send("Server error while adding new post");
                     return;
                 }
-                response.status(200).json(result);
+                afterPostUpload( request.body.userId, request.body.channelId);
+                response.status(200).json({ postId: result.insertId });
+               
             })
 })
 
 
-app.post('/searchPost',(request, response)=>{
-    db.query(` SELECT p.*, c.name AS channel 
-                FROM postForum.postTable p
-                JOIN postForum.channelTable c
-                ON c.id = p.channelId
-                WHERE p.topic LIKE ? OR p.data LIKE ?`,
-            [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
-                if(error){
-                    console.log(error);
-                    response.status(500).send("Server error during searching post");
-                    return;
-                }
-                response.status(200).json(result);
-            })
-})
 
 
-app.get('/searchPerson',(request, response)=>{
-    db.query(` SELECT * FROM postForum.userTable WHERE name LIKE ? OR username LIKE ?`,
-            [`%${request.query.person}%`, `%${request.query.person}%`],(error, result)=>{
-                if(error){
-                    console.log(error);
-                    response.status(500).send("Server error during searching people");
-                    return;
-                }
-                response.status(200).json(result);
-            })
-})
 
-
+// Functionality to increase likes for  post 
 app.post('/likePost',(request,response)=>{
     db.query(`UPDATE postForum.postTable SET likes =  IFNULL(likes, 0) + 1 WHERE id = ?`,
             [request.body.postId], (error,result)=>{
@@ -691,6 +555,8 @@ app.post('/likePost',(request,response)=>{
             })
 })
 
+
+// Functionality to increase dislikes for  post 
 app.post('/dislikePost',(request,response)=>{
     db.query(`UPDATE postForum.postTable SET dislikes =  IFNULL(dislikes, 0) + 1 WHERE id = ?`,
             [request.body.postId], (error,result)=>{
@@ -716,12 +582,165 @@ app.post('/dislikePost',(request,response)=>{
 
 
 
+/************************************************************************************************************************************
+                                        Functionality Related to navlink page 
+
+************************************************************************************************************************************/
+
+// functionality to search given channel
+app.get('/searchChannel',(request, response)=>{
+    db.query(` SELECT * FROM postForum.channelTable WHERE name LIKE ?`,
+            [ `%${request.query.channel}%`],(error, result)=>{
+                if(error){
+                    console.log(error);
+                    response.status(500).send("Server error during searching channel");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+// functionality to search given post
+app.post('/searchPost',(request, response)=>{
+    db.query(` SELECT p.*, c.name AS channel 
+                FROM postForum.postTable p
+                JOIN postForum.channelTable c
+                ON c.id = p.channelId
+                WHERE p.topic LIKE ? OR p.data LIKE ?`,
+            [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
+                if(error){
+                    console.log(error);
+                    response.status(500).send("Server error during searching post");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+// functionality to search given person
+app.get('/searchPerson',(request, response)=>{
+    db.query(` SELECT * FROM postForum.userTable WHERE name LIKE ? OR username LIKE ?`,
+            [`%${request.query.person}%`, `%${request.query.person}%`],(error, result)=>{
+                if(error){
+                    console.log(error);
+                    response.status(500).send("Server error during searching people");
+                    return;
+                }
+                response.status(200).json(result);
+            })
+})
+
+
+
+/************************************************************************************************************************************
+                                        Functionality Related to messages page 
+
+************************************************************************************************************************************/
+
+
+// Retrive messages between current login user and selected user
+app.get('/getAllMessages',(request,response)=>{
+    db.query(`SELECT id FROM postForum.userTable WHERE username = ? ` ,[request.query.currUser],(error, result)=>{
+        if(error){
+            console.log("error1" ,error);
+            response.status(500).send("Server error during retriving id of current user for getting all messages");
+            return;
+        }
+        db.query(`SELECT * FROM postForum.messageTable
+              WHERE senderId=? AND receiverId=? 
+              OR senderId=? AND receiverId=? 
+              ORDER BY datetime`,
+              [result[0].id, request.query.otherUser, request.query.otherUser,result[0].id],
+              (error, messageResult)=>{
+                if(error){
+                    console.log("error2" ,error);
+                    response.status(500).send("Server error during retriving all messages");
+                    return;
+                }
+                const messagesPromise =  messageResult.map(message=>{
+                    return new Promise((resolve, reject)=>{
+                        db.query(`SELECT * FROM postForum.fileTable WHERE messageId=?`,[message.id],(error, fileResult)=>{
+                            if(error){
+                                reject("Server error during retriving all files related to current message");
+                            }
+                            else{
+                                resolve({...message,files:fileResult.length> 0? fileResult:[]})
+                            }
+                        })
+                    })
+                })
+                Promise.all(messagesPromise)
+                .then(messagesWithFiles=>{
+                    response.status(200).json(messagesWithFiles);
+                })
+                .catch(error=>{
+                    console.log("error3" ,error);
+                    response.status(500).send("Server error during retriving all messages with their files");
+                })
+            })
+    })
+    
+})
+
+
+// Add new message
+app.post('/addMessage',(request, response)=>{
+    db.query(`INSERT INTO postForum.messageTable(
+        senderId,
+        receiverId,
+        message
+        )
+        VALUES (?,?,?)`,
+      [ request.body.senderId,
+        request.body.receiverId,
+        request.body.message
+      ],
+      (error, result)=>{
+          if(error){
+            console.log(error);
+              response.status(500).send("Server error while adding new message");
+              return;
+          }
+          afterMsgUpload(request.body.senderId, request.body.receiverId);
+          response.status(200).json({ messageId: result.insertId });
+      })
+})
+
+
+// functionality to update usertable after message store 
+function afterMsgUpload(sender, receiver){
+    db.query(`SELECT * FROM postForum.messageTable 
+              WHERE (senderId=? AND receiverId=?)
+              OR
+              (senderId=? AND receiverId=?)`,
+            [ sender, receiver, receiver,sender],
+            (error, result)=>{
+                if(error){
+                    response.status(500).send("Server error while checking whether new connection or not");
+                    return;
+                } 
+                if(result.length == 0){
+                    db.query(` UPDATE postForum.userTable SET connections = IFNULL(connections, 0) + 1 WHERE id = ? OR id =?`,[sender, receiver],error=>{
+                        if(error){
+                            console.error("Server error during updating connections in postForum.userTable");
+                            return;
+                        }
+                        console.log("Successfully updated connections in postForum.userTable");
+                    });
+                }
+            })
+}
+
+
 
 /************************************************************************************************************************************
                                         Functionality Related to profile page
 
 ************************************************************************************************************************************/
 
+// Retrieve most active users 
 app.get('/activeUsers', (request, response)=>{
     db.query(`SELECT * from postForum.userTable WHERE username !=? ORDER BY totalPosts DESC LIMIT 5`,
             [ request.query.currUser],(error, result)=>{
@@ -734,6 +753,7 @@ app.get('/activeUsers', (request, response)=>{
 })
 
 
+// Retrieve most active channels 
 app.get('/activeChannels', (request, response)=>{
     db.query(`SELECT * from postForum.channelTable ORDER BY totalPosts DESC LIMIT 7`,(error, result)=>{
         if(error){
@@ -745,7 +765,7 @@ app.get('/activeChannels', (request, response)=>{
 })
 
 
-
+// Retrieve all users 
 app.get('/allUsers', (request, response)=>{
     db.query(`SELECT * from postForum.userTable WHERE username !=? `,
             [ request.query.currUser],(error, result)=>{
@@ -758,7 +778,7 @@ app.get('/allUsers', (request, response)=>{
 })
 
 
-
+// Functioanlity to store profile changes  
 app.post('/saveChanges',(request, response)=>{
     db.query(`UPDATE postForum.userTable 
               SET 
@@ -781,6 +801,7 @@ app.post('/saveChanges',(request, response)=>{
 })
 
 
+// Functionality to add new media account to user's profile 
 app.post('/addMedia',(request, response)=>{
     db.query(`INSERT INTO postForum.mediaTable(
               userId,
@@ -802,6 +823,7 @@ app.post('/addMedia',(request, response)=>{
 })
 
 
+// Functionality to remove media account from user's profile 
 app.post('/removeMedia',(request, response)=>{
     db.query(`DELETE FROM postForum.mediaTable WHERE userId=? AND id=?`,
             [ request.body.userId, request.body.mediaId ],error=>{
@@ -813,10 +835,6 @@ app.post('/removeMedia',(request, response)=>{
                 response.status(200).send("Successfully deleted media");
             })
 })
-
-
-
-
 
 
 
@@ -853,7 +871,7 @@ app.post('/getUserDetails',(request,response)=>{
 })
 
 
-
+// Remove given channel from website. Admin functionality 
 app.post('/deleteChannel',(request,response)=>{
     db.query(`DELETE FROM postForum.postTable WHERE channelId = ?`,[request.body.channel],(error,result)=>{
         if(error){
@@ -872,6 +890,8 @@ app.post('/deleteChannel',(request,response)=>{
     })
 })
 
+
+// Remove given post and its nested replies from website. Admin functionality 
 app.post('/deletePost',(request,response)=>{
     db.query(`WITH RECURSIVE deleteTree AS (
         SELECT 
@@ -896,6 +916,7 @@ app.post('/deletePost',(request,response)=>{
 })
 
 
+// Remove given user from website. Admin functionality 
 app.post('/deleteUser',(request,response)=>{
     db.query(`SELECT id FROM postForum.postTable WHERE userId = ?`,[request.body.userId],(error,result)=>{
         if (error){
@@ -934,8 +955,7 @@ app.post('/deleteUser',(request,response)=>{
                     }
                     response.status(200).send("Successfully deleted profile");
                 })  
-        
-                }
+            }
             )
             .catch(error=>{
                 console.log("error3" ,error);
