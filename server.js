@@ -630,6 +630,7 @@ app.get('/searchChannel',(request, response)=>{
     db.query(` SELECT * FROM postForum.channelTable WHERE name LIKE ?`,
             [ `%${request.query.channel}%`],(error, result)=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error during searching channel");
                     return;
                 }
@@ -646,6 +647,7 @@ app.post('/searchPost',(request, response)=>{
                 WHERE p.topic LIKE ? OR p.data LIKE ?`,
             [ `%${request.body.post}%`, `%${request.body.post}%`],(error, result)=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error during searching post");
                     return;
                 }
@@ -658,6 +660,7 @@ app.get('/searchPerson',(request, response)=>{
     db.query(` SELECT * FROM postForum.userTable WHERE name LIKE ? OR username LIKE ?`,
             [`%${request.query.person}%`, `%${request.query.person}%`],(error, result)=>{
                 if(error){
+                    console.log(error);
                     response.status(500).send("Server error during searching people");
                     return;
                 }
@@ -854,11 +857,13 @@ app.post('/getUserDetails',(request,response)=>{
 app.post('/deleteChannel',(request,response)=>{
     db.query(`DELETE FROM postForum.postTable WHERE channelId = ?`,[request.body.channel],(error,result)=>{
         if(error){
+            console.log(error);
             response.status(500).send("Server error during deleting post for given channel");
             return;
         }
         db.query(`DELETE FROM postForum.channelTable WHERE id = ?`,[request.body.channel],(error,channelResult)=>{
             if(error){
+                console.log(error);
                 response.status(500).send("Server error during deleting channel");
                 return;
             }

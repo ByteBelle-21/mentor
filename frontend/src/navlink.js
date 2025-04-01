@@ -39,79 +39,95 @@ function Navlink({removeAccess}){
     const[searchPeopleResult, setSearchPeopleResult] = useState([]);
     const[searchChannelResult, setSearchChannelResult] = useState([]);
 
-
-    
-    
     useEffect(()=>{
-        if(searchType === 1){
-            if(!searchData){
-                return;
-            }
-            const post = searchData;
-            const data = {post};
-            try {
-                const response =   axios.post(`${window.BASE_URL}/searchPost`,data);
-                if (response.status === 200) {
-                    setSearchPostResult(response.data);
-                    setSearchPeopleResult([]);
-                    setSearchChannelResult([]);
-                    console.log("Successfully searched post");
-                } 
-                else{
-                    console.log(response.message)
-                }
-            } catch (error) {
-                console.error("Catched axios error during searching post: ",error);
-            }
-        }
-        else if(searchData  === 2){
-            if(!searchData){
-                return;
-            }
-            try {
-                const response =   axios.get(`${window.BASE_URL}/searchPerson`,{
-                    params:{
-                        person: searchData
-                    }
-                });
-                if (response.status === 200) {
-                    setSearchPeopleResult(response.data);
-                    setSearchPostResult([]);
-                    setSearchChannelResult([]);
-                    console.log("Successfully searched person");
-                } 
-                else{
-                    console.log(response.message)
-                }
-            } catch (error) {
-                console.error("Catched axios error during searching person: ",error);
-            }
-        }
-        else if(searchData === 3){
-            if(!searchData){
-                return;
-            }
-            try {
-                const response =   axios.get(`${window.BASE_URL}/searchChannel`,{
-                    params:{
-                        channel: searchData
-                    }
-                });
-                if (response.status === 200) {
-                    setSearchChannelResult(response.data);
-                    setSearchPostResult([]);
-                    setSearchPeopleResult([]);
-                    console.log("Successfully searched channel");
-                } 
-                else{
-                    console.log(response.message)
-                }
-            } catch (error) {
-                console.error("Catched axios error during searching channel: ",error);
-            }
-        }
-    },[searchData, searchType]);
+        console.log("Searched channel result is ", searchChannelResult);
+    },[searchChannelResult]);
 
+    useEffect(()=>{
+        console.log("Searched post result is ", searchPostResult);
+    },[searchPostResult]);
+
+    useEffect(()=>{
+        console.log("Searched person result is ", searchPeopleResult);
+    },[searchPeopleResult]);
+
+    const handlePostSearch = async () =>{
+        
+        const post = searchData;
+        const data = {post};
+        try {
+            const response =   await axios.post(`${window.BASE_URL}/searchPost`,data);
+            if (response.status === 200) {
+                setSearchPostResult(response.data);
+                console.log("Successfully searched post");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during searching post: ",error);
+        }
+    }
+
+    const handlePersonSearch = async () =>{
+        try {
+            const response =  await  axios.get(`${window.BASE_URL}/searchPerson`,{
+                params:{
+                    person: searchData
+                }
+            });
+            if (response.status === 200) {
+                setSearchPeopleResult(response.data);
+                console.log("Successfully searched person");
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during searching person: ",error);
+        }
+    }
+
+
+    const handleChannelSearch = async () =>{
+
+        try {
+            const response =  await axios.get(`${window.BASE_URL}/searchChannel`,{
+                params:{
+                    channel: searchData
+                }
+            });
+            if (response.status === 200) {
+                setSearchChannelResult(response.data);
+                console.log("Successfully searched channel", response.data);
+            } 
+            else{
+                console.log(response.message)
+            }
+        } catch (error) {
+            console.error("Catched axios error during searching channel: ",error);
+        }
+    }
+    
+
+    const handleSearch = ()=>{
+        console.log("search data is ",searchData );
+        console.log("search type is ",searchType ); 
+        if(searchType === 1){
+           handlePostSearch();
+        }
+        else if(searchType  === 2){
+            handlePersonSearch();
+        }
+        else if(searchType === 3){
+           handleChannelSearch();
+        }
+    }
+
+
+    useEffect(()=>{
+        handleSearch();
+    },[searchData]);
 
     const goToSearchedChannel =(channel) =>{
         closeSearchModal();
@@ -171,7 +187,7 @@ function Navlink({removeAccess}){
                             <Form.Label >
                                 Select Category
                             </Form.Label>
-                            <Form.Select aria-label="Default select example" style={{borderColor:'blue'}} onChange={(e)=>setSearchType(e.target.value)}>
+                            <Form.Select aria-label="Default select example" style={{borderColor:'blue'}} onChange={(e)=>setSearchType(Number(e.target.value))}>
                                 <option>Open this select menu</option>
                                 <option value="1">Post</option>
                                 <option value="2">People</option>
@@ -184,27 +200,33 @@ function Navlink({removeAccess}){
                             </Form.Label>
                             <Form.Control style={{borderColor:'red'}} value={searchData} onChange={(e)=>setSearchData(e.target.value)}/>
                         </Form.Group>
+                        
                         <div className='search-results'>
                             <p style={{fontWeight:'bold'}}># Search Results</p>
                             <hr style={{margin:'0'}}></hr>
                             <div className='search-result-block'>
                                 <ListGroup className='history-list'>
-                                {searchPostResult && searchPostResult.map((post)=>{
-                                     <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, post.id)}>
-                                        <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
-                                        <p style={{fontSize:'small'}} >showPreview({post.data},10)</p>
-                                    </ListGroup.Item>
+                                {searchPostResult.length > 0 && searchType === 1 && searchPostResult.map((post)=>{
+                                    return(
+                                        <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, post.id)}>
+                                            <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div>
+                                            <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>
+                                        </ListGroup.Item>
+                                    )
                                 })}
-                                {searchChannelResult && searchChannelResult.map((channel)=>{
-                                    <ListGroup.Item className='channel-item' style={{fontWeight:'bold'}} onClick={()=>goToSearchedChannel(channel.name)}># •{channel.name}</ListGroup.Item>
+                                {searchChannelResult.length > 0 && searchType === 3 && searchChannelResult.map((channel)=>{
+                                    return(
+                                        <ListGroup.Item className='channel-item' style={{fontWeight:'bold'}} onClick={()=>goToSearchedChannel(channel.name)}># •{channel.name}</ListGroup.Item>
+                                    );
                                 })}
-                                {searchPeopleResult && searchPeopleResult.map((person)=>{
-                                    <ListGroup.Item className='message-item' onClick={()=>goToSearchedPerson(person.username)}>
-                                        <img src={person.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
-                                        <p style={{margin:'0'}}>{person.name}<p className="view-profile-button">{person.username}</p></p>
-                                        
-                                    </ListGroup.Item>
-                                   
+                                {searchPeopleResult.length > 0 && searchType === 2 && searchPeopleResult.map((person)=>{
+                                    return(
+                                        <ListGroup.Item className='nav-message-item' onClick={()=>goToSearchedPerson(person.username)}>
+                                            <img src={person.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
+                                            <p style={{margin:'0'}}>{person.name}<p className="view-profile-button">{person.username}</p></p>
+                                            
+                                        </ListGroup.Item>
+                                    )
                                 })}
                                 </ListGroup>     
                             </div>

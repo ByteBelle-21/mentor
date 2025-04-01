@@ -24,8 +24,24 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 
 function Messages(){
 
+    const navigateTo = useNavigate();
+    const [selectedUser, setSelectedUser] = useState('');
+    const [currUserId, setCurrUserId] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState(0);
+
     const location = useLocation();
     const personFromState = location?.state?.personFromState;
+
+    useEffect(()=>{
+        getCurrUserDertails();
+         if(personFromState){
+            setSelectedUser(personFromState);
+            getConnectedUserDetails(personFromState);
+        }
+    },[]);
+
+   
+
 
     const[currUserDetails, setCurrUserDetails] = useState([]);
     const getCurrUserDertails = async() =>{
@@ -36,6 +52,7 @@ function Messages(){
             if (response.status === 200) {
                 setCurrUserDetails(response.data.userInfo);
                 setCurrUserId(response.data.userInfo.id);
+                getAllConnections(response.data.userInfo.id);
                 console.log("Successfully retrieved current user details");
             } 
             else{
@@ -52,6 +69,10 @@ function Messages(){
             const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUser}});
             if (response.status === 200) {
                 setConnections(response.data);
+                if(!personFromState){
+                    setSelectedUser(response.data[0].username);
+                    getConnectedUserDetails(response.data[0].username);
+                }
                 console.log("Successfully retrieved all connections");
             } 
             else{
@@ -77,6 +98,7 @@ function Messages(){
             if (response.status === 200) {
                 setConnectedUserDetails(response.data);
                 setSelectedUserId(response.data.userInfo.id);
+                getAllMessages(response.data.userInfo.id);
                 console.log("Successfully retrieved connected  user details",connectedUserDetails);
                
             } 
@@ -89,10 +111,12 @@ function Messages(){
     }
 
 
+
     const [allMessages, setAllMessages] = useState([]);
-    useEffect(()=>{
-        console.log("Successfully retrived all messages", allMessages);
-    },[]);
+
+    useEffect(() => {
+        console.log("All messages updated: ", allMessages);
+      }, [allMessages]);
 
     const getAllMessages = async(connectedUserId) =>{ 
         try {
@@ -105,7 +129,7 @@ function Messages(){
             if (response.status === 200) {
                 setAllMessages(response.data);
                 setMessage("");
-                console.log("Successfully retrieved all messages",setAllMessages);
+                console.log("Successfully retrieved all messages", allMessages);
             } 
             else{
                 console.log(response.message)
@@ -163,9 +187,9 @@ function Messages(){
         try {
             const response =  await axios.post(`${window.BASE_URL}/addMessage`, requestData);
             if (response.status === 200) {
-                console.log("Successfully added new message");
                 handleFileUpload(response.data.messageId);
                 getAllMessages(currUserId);
+                console.log("Successfully added new message");
             } 
             else{
                 console.log(response.message)
@@ -201,43 +225,6 @@ function Messages(){
             console.error("Error while uploading files:", error);
         }
     }
-
-
-
-    const [selectedUser, setSelectedUser] = useState('');
-    const [currUserId, setCurrUserId] = useState('');
-    const [selectedUserId, setSelectedUserId] = useState(0);
-
-    useEffect(()=>{
-        getCurrUserDertails();
-         if(personFromState){
-            setSelectedUser(personFromState);
-            getConnectedUserDetails(personFromState);
-        }
-    },[]);
-
-    useEffect(()=>{
-        if(currUserDetails){
-            getAllConnections(currUserDetails.id);
-        }
-    },[currUserDetails]);
-
-    useEffect(()=>{
-        if(connections && connections.length > 0){
-            if(!selectedUser){
-                setSelectedUser(connections[0].username);
-                getConnectedUserDetails(connections[0].username);
-            }
-        }
-    },[connections]);
-
-
-    useEffect(()=>{
-        if(connectedUserDetails.userInfo){
-            getAllMessages(connectedUserDetails.userInfo.id);
-        }
-    },[connectedUserDetails]);
-
 
 
 
@@ -277,7 +264,7 @@ function Messages(){
             </div>
             <div className='messsage-large-container'>
                 <div className='message-container'>
-                    {allMessages.length > 0 && allMessages.map((message)=>{
+                    {allMessages && allMessages.map((message)=>{
                         return(
                             message.senderId === connectedUserDetails.userInfo.id ?
                             <div className='received-msg'>
@@ -420,7 +407,7 @@ function Messages(){
                             <p style={{fontWeight:'bold', marginTop:'0.5vw'}}>Check Out My Journey</p>
                             <ListGroup className='history-list'>
                                 {connectedUserDetails.post.map((post)=>{
-                                    <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, currPost.id)}>
+                                    <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(post.channel, post.id)}>
                                         <div className="fw-bold" style={{color:'#d84434'}}>{post.channel}</div> 
                                         <p style={{fontSize:'small'}} >{showPreview(post.data,10)}</p>  
                                     </ListGroup.Item>

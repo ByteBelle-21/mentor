@@ -82,17 +82,18 @@ function Channels(){
     
     const[showWarning, setShowWarning] = useState(false);
     const [ itemToDelete, setItemToDelete] = useState('');
-    const [ postToDelete, setPostToDelete] = useState(0);
+    const [ itemToDeleteId, setItemToDeleteId] = useState(0);
     const [fromChannel , setFromChannel] = useState("");
     const [fromChannelId , setFromChannelId] = useState(0);
     const [ itemToDeleteType, setItemToDeleteType] = useState('');
 
-    const openWarnings = (category, item) =>{
+    const openWarnings = (category, item, itemId) =>{
         if(category === "channel"){
             setItemToDelete(item);
+            setItemToDeleteId(itemId);
         }
         else{
-            setPostToDelete(item);
+            setItemToDeleteId(itemId);
         }
       
         setItemToDeleteType(category);
@@ -101,7 +102,7 @@ function Channels(){
 
     const closeWarnings = () =>{
         setItemToDelete("");
-        setPostToDelete(0);
+        setItemToDeleteId(0);
         setItemToDeleteType("");
         setFromChannel("");
         setFromChannelId(0);
@@ -118,7 +119,11 @@ function Channels(){
         getAllChannels();
     },[]);
 
-    
+
+    useEffect(()=>{
+        getAllChannels();  
+    },[location.state]);
+   
     // Functionality to retrive all channels
     const getAllChannels = async() =>{
         try {
@@ -475,10 +480,9 @@ function Channels(){
 
 
     // Functionallity to navigate to message page and open selected user's profile
-    const goToSelectedUserPage = (username)=>{
-        goToSelectedUserPage();
+    const goToSelectedUserPage = (currUsername)=>{
         const params = {
-            userFromState: username,
+            userFromState: currUsername,
         }
         navigateTo('/messages',{state:params});
     }
@@ -547,12 +551,13 @@ function Channels(){
 
     const handleAdminDelete = async() =>{
         if(itemToDeleteType === "channel"){
-            const channel = itemToDelete;
+            const channel = itemToDeleteId;
             const data = {channel};
             try {
                 const response =  await axios.post(`${window.BASE_URL}/deleteChannel`, data);
                 if (response.status === 200) {
                     closeWarnings();
+                    setChannel("Homepage");
                     getAllChannels();
                     console.log("Successfully deleted channel");
                 } 
@@ -564,14 +569,14 @@ function Channels(){
             }
         }
         else{
-            const postId = postToDelete;
+            const postId = itemToDeleteId;
             const data = {postId};
             try {
                 const response =  await axios.post(`${window.BASE_URL}/deletePost`, data);
                 if (response.status === 200) {
                     closeWarnings();
                     if(channel && currChannelId){
-                        handleChannelSelection(channel, currChannelId);
+                        handleChannelSelection(currChannelId,channel);
                     }
                     console.log("Successfully deleted post");
                 } 
@@ -665,7 +670,7 @@ function Channels(){
                     {allChannels.length > 0 && allChannels.map((channel)=>(
                          <ListGroup.Item className='channel-item'>
                                 <Nav.Link  onClick={()=>handleChannelSelection(channel.id, channel.name)}> # • {channel.name}</Nav.Link>
-                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("channel",channel.name)}> <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("channel",channel.name,channel.id)}> <span class="material-symbols-outlined icons" style={{fontSize:'small'}}>delete</span></Nav.Link>}
                         </ListGroup.Item>
                     ))}
                     
@@ -829,8 +834,8 @@ function Channels(){
                                                     <div className="fw-bold">{post.name} </div>
                                                     {post.username}
                                                 </div>
-                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
-                                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("post",post.id)}> <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'1vw'}}> posted on {new Date(post.datetime).toLocaleString()}</p>
+                                                {isAdmin && <Nav.Link onClick={()=>openWarnings("post","",post.id)}> <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                             </Stack>
                                             <hr></hr>
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
@@ -971,8 +976,8 @@ function Channels(){
                                                                     <div className="fw-bold">{childPost.name} </div>
                                                                     {childPost.username}
                                                                 </div>
-                                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'0.5vw'}}> posted on {new Date(childPost.datetime).toLocaleString()}</p>
-                                                                {isAdmin && <Nav.Link className='ms-auto' onClick={()=>openWarnings("post",childPost.id)} > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
+                                                                <p className="ms-auto" style={{fontSize:'small', marginRight:'1vw'}}> posted on {new Date(childPost.datetime).toLocaleString()}</p>
+                                                                {isAdmin && <Nav.Link onClick={()=>openWarnings("post","",childPost.id)} > <span class="material-symbols-outlined icons"  style={{fontSize:'small'}}>delete</span></Nav.Link>}
                                                             </Stack>
                                                             <p id={childPost.id}>{childPost.data}</p>
                                                             <Stack direction="horizontal" gap={3}>
@@ -1141,7 +1146,7 @@ function Channels(){
                 <div className='message-list-block'>
                     <ListGroup variant="flush" >
                         <ListGroup.Item style={{fontWeight:'bold'}}># • Direct Messages For You</ListGroup.Item>
-                        {connections.length > 0 && connections.map((user)=>(
+                        {connections && connections.length > 0 && connections.map((user)=>(
                              <ListGroup.Item className='message-item'>
                                 <img src={user.avatar} style={{width:'2vw', marginRight:'0.5vw'}}></img>
                                 <p style={{margin:'0'}}>{user.name}<p className="view-profile-button" onClick={()=>getselectedUserDetails(user.username)}>View Profile</p></p>
