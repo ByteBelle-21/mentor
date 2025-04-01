@@ -149,6 +149,12 @@ function Homepage({giveAccess}){
             const response = await axios.post(`${window.BASE_URL}/login`, data);
             if (response.status === 200) {  
                 giveAccess(true,logUsername);
+                if(logEmail === "admin@gmail.com" && logPassword === "zxcvbnm" && logUsername === "admin"){
+                    sessionStorage.setItem('isAdmin', "true");
+                }
+                else{
+                    sessionStorage.setItem('isAdmin', "false");
+                }
                 navigateTo('/channels');
             } 
             else if(response.status === 401){

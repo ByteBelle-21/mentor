@@ -28,6 +28,7 @@ function App() {
         setAccess(false);
         setUser('');
         sessionStorage.removeItem('session_user');
+        sessionStorage.setItem('isAdmin', "false");
     }
 
     // Save or remove user's information in sessionStorage
@@ -37,6 +38,7 @@ function App() {
         }
         else{
             sessionStorage.removeItem('session_user');
+            sessionStorage.setItem('isAdmin', "false");
         }
     });
 

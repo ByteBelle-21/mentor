@@ -563,10 +563,11 @@ function Channels(){
      */ 
     const[isAdmin, setIsAdmin] =  useState(false);
     useEffect(()=>{
-        if(sessionStorage.getItem('session_user') === "admin"){
+        if(sessionStorage.getItem('isAdmin') === "true"){
             setIsAdmin(true);
+            
         }
-    })
+    });
 
     const handleAdminDelete = async() =>{
         if(itemToDeleteType === "channel"){

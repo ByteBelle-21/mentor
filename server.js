@@ -73,7 +73,38 @@ db.getConnection((err,connection)=>{
                             return;
                         }
                         else{
-                            console.log("Successfully created user table");
+                            connection.query(`INSERT INTO postForum.userTable(
+                                              username,
+                                              email,
+                                              password,
+                                              name,
+                                              profession,
+                                              skills,
+                                              avatar,
+                                              totalPosts,
+                                              connections,
+                                              expertise)
+                                              VALUES 
+                                              (?,?,?,?,?,?,?,?,?,?)`,
+                                              ["admin",
+                                               "admin@gmail.com",
+                                                "zxcvbnm",
+                                                "Prajakta Sutar",
+                                                "Student",
+                                                "full-stack development,machine learning",
+                                                "/Group302.png",
+                                                0,
+                                                0,
+                                                "Expert"], (error, result)=>{
+                                                    if(error){
+                                                        console.log("Error occured while creating user table : ", error);
+                                                        return;
+                                                    }
+                                                    else{
+                                                        console.log("Successfully added admin to user table");
+                                                        console.log("Successfully created user table");
+                                                    }
+                                                })
                         }
             });
 

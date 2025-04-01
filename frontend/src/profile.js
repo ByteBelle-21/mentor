@@ -306,12 +306,11 @@ function Profile(){
 
 
     // functionality to show / close warnings when admin delete something
-
     useEffect(()=>{
-        if(sessionStorage.getItem('session_user') === "admin"){
+        if(sessionStorage.getItem('isAdmin') === "true"){
             setIsAdmin(true);
         }
-    })
+    });
 
     const openWarnings = (userId, username ) =>{ 
         setItemToDelete(userId);
