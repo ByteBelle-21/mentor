@@ -69,9 +69,12 @@ function Messages(){
             const response =  await axios.get(`${window.BASE_URL}/getConnectedUsers`,{ params: {userId: currUser}});
             if (response.status === 200) {
                 setConnections(response.data);
-                if(!personFromState){
+                if(!personFromState && !selectedUser){
                     setSelectedUser(response.data[0].username);
                     getConnectedUserDetails(response.data[0].username);
+                }
+                else if(selectedUser){
+                    getConnectedUserDetails(selectedUser);
                 }
                 console.log("Successfully retrieved all connections");
             } 
@@ -114,11 +117,6 @@ function Messages(){
 
 
     const [allMessages, setAllMessages] = useState([]);
-
-    useEffect(() => {
-        console.log("All messages updated: ", allMessages);
-      }, [allMessages]);
-
     const getAllMessages = async(connectedUserId) =>{ 
         try {
             const response =  await axios.get(`${window.BASE_URL}/getAllMessages`, {
@@ -189,7 +187,7 @@ function Messages(){
             const response =  await axios.post(`${window.BASE_URL}/addMessage`, requestData);
             if (response.status === 200) {
                 handleFileUpload(response.data.messageId);
-                getAllMessages(currUserId);
+                getCurrUserDertails();
                 console.log("Successfully added new message");
             } 
             else{
@@ -265,13 +263,13 @@ function Messages(){
             </div>
             <div className='messsage-large-container'>
                 <div className='message-container'>
-                    {allMessages && allMessages.map((message)=>{
-                        return(
-                            message.senderId === connectedUserDetails.userInfo.id ?
+                    {allMessages.length > 0 && allMessages.map(currMessage=>(
+
+                            currMessage.senderId === selectedUser ?
                             <div className='received-msg'>
-                                <p>{message.message}</p>
+                                <p>{currMessage.message}</p>
                                 <Stack direction="horizontal" gap={3}>
-                                    {message.files.map(file => (
+                                    {currMessage.files.map(file => (
                                         <a href={createURL(file.file, file.fileType)}
                                             target="_blank" 
                                             rel="noopener noreferrer"
@@ -284,9 +282,9 @@ function Messages(){
                             </div>
                             :
                             <div className='sent-msg'>
-                                <p>{message.message}</p>
+                                <p>{currMessage.message}</p>
                                 <Stack direction="horizontal" gap={3}>
-                                    {message.files.map(file => (
+                                    {currMessage.files.map(file => (
                                         <a href={createURL(file.file, file.fileType)}
                                             target="_blank" 
                                             rel="noopener noreferrer"
@@ -297,8 +295,7 @@ function Messages(){
                                     ))}
                                 </Stack>
                             </div>
-                        );   
-                        })
+                            ))
                     }
                 </div>
                 <div className='textarea-msg-block'>      
