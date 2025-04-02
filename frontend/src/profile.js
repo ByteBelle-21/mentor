@@ -352,7 +352,7 @@ function Profile(){
 
     return(
         <div className='profile-page'>
-           <div className='first-container'>
+           <div className= {!isAdmin ? 'first-container' : 'admin-first-container'}  >
                 {!isAdmin ?
                     <>
                         <h6 style={{fontWeight:'bold', marginLeft:'0.5vw'}}> # Suggested People for you</h6>

@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 function App() {
 
-    window.BASE_URL = 'https://psutar9920-4000.theiaopenshiftnext-0-labs-prod-theiaopenshift-4-tor01.proxy.cognitiveclass.ai/';
+    window.BASE_URL = 'http://localhost:4000';
 
 
     // ariables to store access information about the current user

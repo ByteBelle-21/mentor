@@ -21,6 +21,81 @@ app.use(bodyParser.json());
 
 ************************************************************************************************************************************/
 
+
+let defaultUsers = [
+    ['john_doe', 'john.doe@gmail.com', 'password123', 'John Doe', 'Software Engineer', 'JavaScript, Node.js, React', '/Group301.png', 5, 120, 'Advanced'],
+    ['mary_smith', 'mary.smith@gmail.com', 'password123', 'Mary Smith', 'UI/UX Designer', 'Figma, Sketch, Adobe XD', '/Group302.png', 3, 80, 'Intermediate'],
+    ['david_johnson', 'david.johnson@gmail.com', 'password123', 'David Johnson', 'Data Scientist', 'Python, Machine Learning, SQL', '/Group303.png', 8, 200, 'Expert'],
+    ['lisa_williams', 'lisa.williams@gmail.com', 'password123', 'Lisa Williams', 'Product Manager', 'Agile, Scrum, Roadmaps', '/Group304.png', 4, 90, 'Intermediate'],
+    ['chris_brown', 'chris.brown@gmail.com', 'password123', 'Chris Brown', 'Frontend Developer', 'HTML, CSS, JavaScript', '/Group306.png', 10, 150, 'Advanced'],
+    ['jennifer_davis', 'jennifer.davis@gmail.com', 'password123', 'Jennifer Davis', 'Marketing Strategist', 'SEO, Content Marketing, Social Media', '/Group305.png', 2, 70, 'Intermediate'],
+    ['michael_martinez', 'michael.martinez@gmail.com', 'password123', 'Michael Martinez', 'Backend Developer', 'Java, Spring Boot, Docker', '/Group306.png', 7, 130, 'Advanced'],
+    ['emily_taylor', 'emily.taylor@gmail.com', 'password123', 'Emily Taylor', 'Content Writer', 'Blogging, Copywriting, SEO', '/Group302.png', 6, 60, 'Beginner'],
+    ['daniel_jackson', 'daniel.jackson@gmail.com', 'password123', 'Daniel Jackson', 'QA Engineer', 'Automation Testing, Selenium', '/Group303.png', 4, 110, 'Intermediate'],
+    ['olivia_wilson', 'olivia.wilson@gmail.com', 'password123', 'Olivia Wilson', 'HR Manager', 'Recruiting, Employee Relations', '/Group305.png', 3, 50, 'Beginner']
+
+];
+
+
+let defaultMedia = [
+    [11, 1, 'insta.com/johndoe', '1.png'],
+    [11, 3, 'linkedin.com/in/johndoe', '3.png'],
+    [2, 2, 'fb.com/marysmith', '2.png'],
+    [2, 4, 'snap.com/mary_smith', '4.png'],
+    [3, 1, 'insta.com/davidjohnson', '1.png'],
+    [3, 5, 'reddit.com/user/davidjohnson', '5.png'],
+    [4, 2, 'fb.com/lisawilliams', '2.png'],
+    [4, 3, 'linkedin.com/in/lisawilliams', '3.png'],
+    [5, 4, 'snap.com/chris_brown', '4.png'],
+    [5, 1, 'insta.com/chrisbrown', '1.png'],
+    [6, 3, 'linkedin.com/in/jenniferdavis', '3.png'],
+    [6, 5, 'reddit.com/user/jenniferdavis', '5.png'],
+    [7, 1, 'insta.com/michaelmartinez', '1.png'],
+    [7, 2, 'fb.com/michaelmartinez', '2.png'],
+    [8, 4, 'snap.com/emily_taylor', '4.png'],
+    [8, 5, 'reddit.com/user/emilytaylor', '5.png'],
+    [9, 2, 'fb.com/danieljackson', '2.png'],
+    [9, 3, 'linkedin.com/in/danieljackson', '3.png'],
+    [10, 1, 'insta.com/oliviawilson', '1.png'],
+    [10, 4, 'snap.com/olivia_wilson', '4.png']
+];
+
+
+let defaultChannels = [
+    ['Machine Learning & AI'],
+    ['Software Engineering'],
+    ['Data Science & Analytics'],
+    ['Web Development'],
+    ['Cybersecurity']
+];
+
+
+
+let defaultPosts = [
+    [11, 4, 0, 'What is your favorite programming language?', 'Let\'s discuss the strengths and weaknesses of different programming languages.', 0, 0, 0],
+    [2, 1, 0, 'JavaScript vs Python', 'Which language do you prefer for web development - JavaScript or Python?', 0, 3, 0],
+    [3, 1, 0, 'Best language for Machine Learning?', 'Do you think Python is the best language for ML, or are there other options?', 0, 5, 0],
+    [4, 1, 0, 'How to start with Machine Learning?', 'Any suggestions on resources and courses to start learning ML from scratch?', 0, 10, 1],
+    [5, 3, 0, 'Deep Learning Frameworks', 'What are the best frameworks for deep learning, such as TensorFlow and PyTorch?', 0, 8, 0],
+    [6, 3, 0, 'AI Ethics', 'How do we ensure the ethical use of AI in society?', 2, 7, 2],
+    [7, 4, 0, 'Best practices for code quality', 'What are some best practices to maintain high code quality in large projects?', 0, 6, 1],
+    [8, 2, 0, 'Agile vs Waterfall', 'Which development methodology works best for you - Agile or Waterfall?', 0, 4, 0],
+    [9, 3, 0, 'Introduction to Data Science', 'What skills do you need to become a data scientist? Let’s discuss the learning path.', 0, 5, 0],
+    [10, 4, 0, 'Data Cleaning Tips', 'Data cleaning can be a tedious task. Any tips or tools that make it easier?', 0, 3, 1],
+    [11, 2, 0, 'Frontend vs Backend Development', 'Which is better: frontend or backend development? Let’s discuss the pros and cons of each.',0, 4, 0],
+    [2, 4, 0, 'Best Frameworks for Web Development', 'What are the best frontend and backend frameworks for building modern web applications?', 0, 6, 1]
+    [11, 5, 0, 'Importance of Multi-Factor Authentication', 'MFA adds an extra layer of security by requiring more than just a password. It’s essential for protecting your accounts.', 0, 15, 2],
+
+];
+
+
+
+
+
+
+
+
+
 // Create connection with MYSQL server 
 var db = mysql.createPool({
     host: 'mysql-image',
@@ -103,10 +178,31 @@ db.getConnection((err,connection)=>{
                                                     else{
                                                         console.log("Successfully added admin to user table");
                                                         console.log("Successfully created user table");
+                                                        defaultUsers.forEach(user=>{
+                                                             connection.query(`INSERT INTO userTable(
+                                                                                username, 
+                                                                                email, 
+                                                                                password, 
+                                                                                name, 
+                                                                                profession, 
+                                                                                skills, 
+                                                                                avatar, 
+                                                                                totalPosts, 
+                                                                                connections, 
+                                                                                expertise) 
+                                                                                VALUES
+                                                                                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                                                                user, (error, result)=>{
+                                                                                    if (error) {
+                                                                                        console.log("Error inserting user: ", error);
+                                                                                    }
+                                                                                });
+                                                        })
                                                     }
                                                 })
                         }
             });
+
 
             connection.query(`CREATE TABLE IF NOT EXISTS mediaTable
                             ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -121,6 +217,20 @@ db.getConnection((err,connection)=>{
                                 }
                                 else{
                                     console.log("Successfully created media table");
+                                    defaultMedia.forEach((media)=>{
+                                        connection.query(`INSERT INTO mediaTable(
+                                                        userId ,
+                                                        type ,
+                                                        link ,
+                                                        image)
+                                                        VALUES
+                                                        (?,?,?,?)`,
+                                                        media,(error, result)=>{
+                                                            if (error) {
+                                                                console.log("Error inserting media: ", error);
+                                                            }
+                                                        })
+                                    })
                                 }
             });
 
@@ -135,6 +245,13 @@ db.getConnection((err,connection)=>{
                                 }
                                 else{
                                     console.log("Successfully created channel table");
+                                    defaultChannels.forEach((channel)=>{
+                                        connection.query(`INSERT INTO channelTable (name) VALUES (?)`,channel,(error, result)=>{
+                                            if (error) {
+                                                console.log("Error inserting channel: ", error);
+                                            }
+                                        })
+                                    })
                                 }
             });
 
@@ -156,6 +273,21 @@ db.getConnection((err,connection)=>{
                                 }
                                 else{
                                     console.log("Successfully created post table");
+                                    defaultPosts.forEach((post)=>{
+                                        connection.query(`INSERT INTO postTable(
+                                                            userId ,
+                                                            channelId ,
+                                                            replyTo,
+                                                            topic ,
+                                                            data ,
+                                                            level , 
+                                                            likes ,
+                                                            dislikes) VALUES (?,?,?,?,?,?,?,?)`, post,(error, result)=>{
+                                                                if (error) {
+                                                                    console.log("Error inserting post: ", error);
+                                                                }
+                                                            })
+                                    })
                                 }
             });
 
@@ -194,6 +326,8 @@ db.getConnection((err,connection)=>{
         }
     });
 });
+
+
 
 
 

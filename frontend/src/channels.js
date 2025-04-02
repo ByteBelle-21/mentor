@@ -631,7 +631,7 @@ function Channels(){
                         <Form.Control 
                             type='text'
                             style={{borderColor:'red'}}
-                            onChange={(e)=>{setChannelName(e.target.value),closeChannelErrors()}}    
+                            onChange={(e)=>{setChannelName(e.target.value);closeChannelErrors();}}    
                         />
                     </Form.Group>
                     <Stack direction='horizontal' gap={4}>
@@ -718,7 +718,7 @@ function Channels(){
                                 type='text'
                                 ref={topicTextAreaRef}
                                 style={{borderColor:'red'}} 
-                                onChange={(e)=>{setTopic(e.target.value),closePostErrors()}} 
+                                onChange={(e)=>{setTopic(e.target.value);closePostErrors();}} 
                                 value={topic}
                                 placeholder={channel === "Homepage" && "Add post's topic here. You can also add emoji"}
                                 readOnly = {channel === "Homepage" ? true :  false}
@@ -742,7 +742,7 @@ function Channels(){
                                 as="textarea" 
                                 rows={4} 
                                 style={{borderColor:'blue'}}
-                                onChange={(e)=>{setData(e.target.value), closePostErrors()}}
+                                onChange={(e)=>{setData(e.target.value); closePostErrors();}}
                                 value={data}
                                 placeholder={channel === "Homepage" && "Add post's data here. You can also add emoji"}
                                 readOnly = {channel === "Homepage" ? true :  false}
@@ -839,14 +839,16 @@ function Channels(){
                                             <p style={{fontWeight:'bold'}}>{post.topic}</p>
                                             <p id={post.id}> {post.data}</p>
                                             <Stack direction="horizontal" gap={3}>
-                                                {post.files.map(file => (                               
-                                                    <a href={createURL(file.file, file.fileType)}
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        style={{ fontSize: 'small', textDecoration: 'none' }}>
-                                                        {file.fileName}
-                                                    </a>                                             
-                                                ))}
+                                                {post.files.map((file) => { 
+                                                    return(                              
+                                                        <a href={createURL(file.file, file.fileType)}
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            style={{ fontSize: 'small', textDecoration: 'none' }}>
+                                                            {file.fileName}
+                                                        </a>
+                                                    );                                           
+                                                })}
                                              </Stack>
                                             <Stack direction='horizontal' gap={3} style={{ alignItems:'center'}}>
                                                 <Nav.Link  
@@ -1181,12 +1183,13 @@ function Channels(){
                                 {selectedUserDetails.media.length >  0 &&
                                     <>
                                         <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                                        <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
+                                        <Stack direction='horizontal' gap={3} style={{marginBottom:'1vw', justifyContent:'center'}}>
                                             {selectedUserDetails.media.map((account)=>{
-                                                <Nav.Link >
-                                                    <Image  src={account.image}  className="social-media-img"  roundedCircle />
-                                                </Nav.Link>
-                                                
+                                                return(
+                                                    <Nav.Link >
+                                                        <Image  src={account.image} className="social-media-img"  roundedCircle />
+                                                    </Nav.Link>
+                                                )
                                             })}
                                         </Stack>
                                     </>
