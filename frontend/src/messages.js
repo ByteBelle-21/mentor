@@ -11,7 +11,6 @@ import Overlay from 'react-bootstrap/Overlay';
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';               
 
@@ -36,9 +35,6 @@ function Messages(){
     const [connectedUserDetails, setConnectedUserDetails ] = useState([]);
     const [allMessages, setAllMessages] = useState([]);
 
-    // Variables to store state of emoji popover 
-    const msgEmojiTarget =  useRef(null);
-    const [showMsgEmoji, setShowMsgEmoji] = useState(false);
 
     // Variables to store reference to text area , as well as input message 
     const msgTextAreaRef = useRef(null);
@@ -174,14 +170,7 @@ function Messages(){
     },[msgFiles.length])
 
 
-    // Functionality to handle emoji input 
-    const handleMsgEmojiInput =(emoji) =>{
-        const cursor = msgTextAreaRef.current.selectionStart;
-        const newData = message.slice(0,cursor) + emoji.native + message.slice(cursor);
-        setMessage(newData);
-        msgTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
-        msgTextAreaRef.current.focus();
-    }
+    
 
 
     // Functionality to store new post along with input files 
@@ -344,17 +333,7 @@ function Messages(){
                         ref={msgFileRef}
                         onChange={(e) => handleFileInput(e)}
                     />
-                    <Nav.Link 
-                        style={{color:'black', marginRight:'1vh', opacity:'70%'}} 
-                        ref={msgEmojiTarget} 
-                        onClick={()=> setShowMsgEmoji(!showMsgEmoji)}>
-                    <span class="material-symbols-outlined">add_reaction</span>
-                    </Nav.Link> 
-                    <Overlay target={msgEmojiTarget} show={showMsgEmoji} placement='top'>
-                        <Popover id="popover-basic">
-                            <Picker  onEmojiSelect={handleMsgEmojiInput} />
-                        </Popover>
-                    </Overlay>
+                    
                     <TextareaAutosize  
                         placeholder="Add your message here"  
                         className='text-area-formcontrol' 

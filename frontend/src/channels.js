@@ -14,7 +14,6 @@ import Overlay from 'react-bootstrap/Overlay';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Picker from '@emoji-mart/react';
 import Popover from 'react-bootstrap/Popover';
 import Badge from 'react-bootstrap/Badge';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
@@ -26,14 +25,6 @@ function Channels(){
     const navigateTo = useNavigate();
     const location = useLocation();
     const { channelFromState, postFromState } = location?.state || {};
-
-    //Variables for emoji popover open which shows emoji panel
-    const topicEmojiTarget = useRef(null);
-    const postEmojiTarget = useRef(null);
-    const replyEmojiTarget = useRef(null);
-    const [showTopicEmoji, setShowTopicEmoji] = useState(false);
-    const [showPostEmoji, setShowPostEmoji] = useState(false);
-    const [showReplyEmoji, setShowReplyEmoji] = useState(false);
 
     // Variables for textarea reference used to refer textarea
     const topicTextAreaRef = useRef(null);
@@ -272,8 +263,6 @@ function Channels(){
         setTopic('');
         setData('');
         setFiles([]);
-        setShowPostEmoji(false);
-        setShowTopicEmoji(false);
         setShowFilePopover(false);
         closePostErrors();
         setShowPostModal(false);
@@ -284,50 +273,10 @@ function Channels(){
         setPost500Error(false);
     }
 
-    // Functionality to open/close emoji panels to include emoji with post's topic or data
-    const clickTopicEmoji = ()=>{
-        setShowPostEmoji(false);
-        setShowFilePopover(false);
-        setShowTopicEmoji(!showTopicEmoji);
-    }
-
-    const clickPostEmoji = ()=>{
-        setShowTopicEmoji(false);
-        setShowFilePopover(false);
-        setShowPostEmoji(!showPostEmoji);
-    }
 
     // Functonality to open/close file popover which shows selected files
     const clickFilePopover = ()=>{
-        setShowTopicEmoji(false);
-        setShowPostEmoji(false);
         setShowFilePopover(!showFilePopover);
-    }
-
-
-    // Functionality to include emoji in post's topic or data or reply
-    const handleTopicEmojiInput =(emoji) =>{
-        const cursor = topicTextAreaRef.current.selectionStart;
-        const newTopic = topic.slice(0,cursor) + emoji.native + topic.slice(cursor);
-        setTopic(newTopic);
-        topicTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
-        topicTextAreaRef.current.focus();
-    }
-
-    const handleDataEmojiInput =(emoji) =>{
-        const cursor = dataTextAreaRef.current.selectionStart;
-        const newData = data.slice(0,cursor) + emoji.native + data.slice(cursor);
-        setData(newData);
-        dataTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
-        dataTextAreaRef.current.focus();
-    }
-
-    const handleReplyEmojiInput =(emoji) =>{
-        const cursor = replyTextAreaRef.current.selectionStart;
-        const newData = reply.slice(0,cursor) + emoji.native + reply.slice(cursor);
-        setReply(newData);
-        replyTextAreaRef.current.setSelectionRange(cursor + emoji.native.length, cursor + emoji.native.length);
-        replyTextAreaRef.current.focus();
     }
 
    
@@ -703,16 +652,8 @@ function Channels(){
                         {postError ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Please fill out all required field</p>:<></>}
                         {post500Error ? <p style={{fontSize:'small', color:'red', margin:'0', padding:'0'}}> Server error occured : Try again !</p>:<></>}
                         <Form.Group className='post-form-group'>
-                            <Form.Label className='post-form-label'>
+                            <Form.Label  >
                                 Post Topic
-                                <Nav.Link className='ms-auto' onClick={()=>clickTopicEmoji()} ref={topicEmojiTarget}>
-                                    <span class="material-symbols-outlined icons" >add_reaction</span>
-                                </Nav.Link>
-                                <Overlay target={topicEmojiTarget} show={showTopicEmoji} placement='right'>
-                                    <Popover id="popover-basic">
-                                        <Picker data={data} onEmojiSelect={handleTopicEmojiInput} />
-                                    </Popover>
-                                </Overlay>
                             </Form.Label>
                             <Form.Control 
                                 type='text'
@@ -720,21 +661,13 @@ function Channels(){
                                 style={{borderColor:'red'}} 
                                 onChange={(e)=>{setTopic(e.target.value);closePostErrors();}} 
                                 value={topic}
-                                placeholder={channel === "Homepage" && "Add post's topic here. You can also add emoji"}
+                                placeholder={channel === "Homepage" && "Add post's topic here."}
                                 readOnly = {channel === "Homepage" ? true :  false}
                             />
                         </Form.Group>
                         <Form.Group className='post-form-group'>
-                            <Form.Label className='post-form-label'>
+                            <Form.Label  >
                                 Post Data
-                                <Nav.Link className='ms-auto' onClick={()=>clickPostEmoji()} ref={postEmojiTarget}>
-                                    <span class="material-symbols-outlined icons" >add_reaction</span>
-                                </Nav.Link>
-                                <Overlay target={postEmojiTarget} show={showPostEmoji} placement='right'>
-                                    <Popover id="popover-basic">
-                                        <Picker data={data} onEmojiSelect={handleDataEmojiInput} />
-                                    </Popover>
-                                </Overlay>
                             </Form.Label>
                             <Form.Control 
                                 type='text'
@@ -744,7 +677,7 @@ function Channels(){
                                 style={{borderColor:'blue'}}
                                 onChange={(e)=>{setData(e.target.value); closePostErrors();}}
                                 value={data}
-                                placeholder={channel === "Homepage" && "Add post's data here. You can also add emoji"}
+                                placeholder={channel === "Homepage" && "Add post's data here."}
                                 readOnly = {channel === "Homepage" ? true :  false}
                             />
                         </Form.Group>
@@ -924,21 +857,6 @@ function Channels(){
                                                             ref={fileReplyRef}
                                                             onChange={(e)=> handleFileInput(e,false, true)}
                                                         />
-                                                        <Nav.Link 
-                                                            style={{fontSize:'small', color:'#f86714'}} 
-                                                            ref={replyEmojiTarget} 
-                                                            onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
-                                                            <span 
-                                                                class="material-symbols-outlined icons" 
-                                                                style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                                    add_reaction
-                                                            </span>
-                                                        </Nav.Link>
-                                                        <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
-                                                            <Popover id="popover-basic">
-                                                                <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
-                                                            </Popover>
-                                                        </Overlay>
                                                         <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
                                                             Cancel
                                                         </Nav.Link>
@@ -1066,21 +984,6 @@ function Channels(){
                                                                                 ref={fileReplyRef}
                                                                                 onChange={(e)=> handleFileInput(e,false, true)}
                                                                             />
-                                                                            <Nav.Link 
-                                                                                style={{fontSize:'small', color:'#f86714'}} 
-                                                                                ref={replyEmojiTarget} 
-                                                                                onClick={()=> setShowReplyEmoji(!showReplyEmoji)}>
-                                                                                <span 
-                                                                                    class="material-symbols-outlined icons" 
-                                                                                    style={{fontSize:'1vw', margin:'0', padding:'0', color:'#f86714'}}>
-                                                                                        add_reaction
-                                                                                </span>
-                                                                            </Nav.Link>
-                                                                            <Overlay target={replyEmojiTarget} show={showReplyEmoji} placement='top'>
-                                                                                <Popover id="popover-basic">
-                                                                                    <Picker data={data} onEmojiSelect={handleReplyEmojiInput} />
-                                                                                </Popover>
-                                                                            </Overlay>
                                                                             <Nav.Link style={{fontSize:'small', color:'#f86714', fontWeight:'bold'}} onClick={closeCommentInput}>                          
                                                                                 Cancel
                                                                             </Nav.Link>

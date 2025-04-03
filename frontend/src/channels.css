@@ -192,11 +192,7 @@
     color: #fc0380;
 }
 
-.post-form-label{
-    display: flex;
-    flex-direction: row;
-    justify-content: end;
-}
+
 
 .post-form-group{
     width: 100%;
