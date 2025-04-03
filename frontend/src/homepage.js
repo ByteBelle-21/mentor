@@ -187,7 +187,7 @@ function Homepage({giveAccess}){
                         <Form.Control 
                             type='text'
                             style={{borderColor:'red'}}
-                            onChange={(e)=>{ setLogEmail(e.target.value), removeErrors()}}
+                            onChange={(e)=>{ setLogEmail(e.target.value); removeErrors();}}
                             
                             />
                     </Form.Group>
@@ -196,7 +196,7 @@ function Homepage({giveAccess}){
                         <Form.Control 
                             type='text'
                             style={{borderColor:'#22b6a2'}}
-                            onChange={(e)=>{ setLogUsername(e.target.value), removeErrors()}}
+                            onChange={(e)=>{ setLogUsername(e.target.value); removeErrors();}}
                         />
                     </Form.Group>
                     <Form.Group className='form-group'>
@@ -204,7 +204,7 @@ function Homepage({giveAccess}){
                         <Form.Control
                             type='password' 
                             style={{borderColor:'#ffcc00'}}
-                            onChange={(e)=>{ setLogPassword(e.target.value), removeErrors()}}
+                            onChange={(e)=>{ setLogPassword(e.target.value); removeErrors();}}
                         />
                     </Form.Group>
                     <Stack direction='horizontal' gap={4}>
@@ -236,7 +236,7 @@ function Homepage({giveAccess}){
                                     <Form.Control
                                         type='email' 
                                         style={{borderColor:'red'}}
-                                        onChange={(e)=>{ setSignEmail(e.target.value), removeErrors()}}
+                                        onChange={(e)=>{ setSignEmail(e.target.value); removeErrors();}}
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
@@ -244,7 +244,7 @@ function Homepage({giveAccess}){
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#22b6a2'}}
-                                        onChange={(e)=>{ setSignUsername(e.target.value), removeErrors()}}
+                                        onChange={(e)=>{ setSignUsername(e.target.value); removeErrors();}}
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
@@ -252,7 +252,7 @@ function Homepage({giveAccess}){
                                     <Form.Control 
                                         type='password'
                                         style={{borderColor:'#ffcc00'}}
-                                        onChange={(e)=>{ setSignPassword(e.target.value), removeErrors()}}    
+                                        onChange={(e)=>{ setSignPassword(e.target.value);removeErrors();}}    
                                     />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>
@@ -270,7 +270,7 @@ function Homepage({giveAccess}){
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'red'}}
-                                        onChange={(e)=>{ setSignName(e.target.value), removeErrors()}}   
+                                        onChange={(e)=>{ setSignName(e.target.value); removeErrors();}}   
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
@@ -278,7 +278,7 @@ function Homepage({giveAccess}){
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#22b6a2'}}
-                                        onChange={(e)=>{ setSignProfession(e.target.value), removeErrors()}}    
+                                        onChange={(e)=>{ setSignProfession(e.target.value); removeErrors();}}    
                                     />
                                 </Form.Group>
                                 <Form.Group className='form-group'>
@@ -286,7 +286,7 @@ function Homepage({giveAccess}){
                                     <Form.Control 
                                         type='text'
                                         style={{borderColor:'#ffcc00'}}
-                                        onChange={(e)=>{ setSignSkills(e.target.value), removeErrors()}}    
+                                        onChange={(e)=>{ setSignSkills(e.target.value); removeErrors();}}    
                                     />
                                 </Form.Group>
                                 <Stack direction='horizontal' gap={4}>

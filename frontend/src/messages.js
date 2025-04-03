@@ -393,11 +393,13 @@ function Messages(){
                         {connectedUserDetails.media.length >  0 &&
                             <>
                                 <p style={{fontWeight:'bold', marginTop:'1vw'}}>You can follow me on </p>
-                                <Stack direction='horizontal' style={{marginBottom:'1vw'}}>
+                                <Stack direction='horizontal' gap={3} style={{marginBottom:'1vw', justifyContent:'center'}}>
                                     {connectedUserDetails.media.map((account)=>{
+                                        return(
                                         <Nav.Link >
                                             <Image  src={account.image}  className="social-media-img"  roundedCircle />
                                         </Nav.Link>
+                                        );
                                     })}
                                 </Stack>
                             </>

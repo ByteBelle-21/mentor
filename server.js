@@ -1083,7 +1083,7 @@ app.post('/deletePost',(request,response)=>{
 
 // Remove given user from website. Admin functionality 
 app.post('/deleteUser',(request,response)=>{
-    db.query(`SELECT id FROM postForum.postTable WHERE userId = ?`,[request.body.userId],(error,result)=>{
+    db.query(`SELECT id FROM postForum.postTable WHERE userId = ?`,[request.body.userId],async(error,result)=>{
         if (error){
             console.log(error);
             response.status(500).send("Server error during getting postids while deleting  post");
@@ -1103,14 +1103,15 @@ app.post('/deleteUser',(request,response)=>{
                         FROM postForum.postTable p
                         INNER JOIN deleteTree pT ON p.replyTo = pT.id
                     )
-                    DELETE FROM postForum.postTable WHERE id IN (SELECT id FROM deleteTree)`,[postId],(error, fileResult)=>{
+                    DELETE FROM postForum.postTable WHERE id IN (SELECT id FROM deleteTree)`,[postId.id],(error, fileResult)=>{
                         if(error){
                             reject("Server error during deleting post for selected user");
                         }
+                        resolve(fileResult); 
                     })
                 })
             })
-            Promise.all(deletionPromise)
+            await Promise.all(deletionPromise)
             .then(()=>{
                 db.query(`DELETE FROM postForum.userTable WHERE id=?`,[request.body.userId],(error,userResult)=>{
                     if (error){
