@@ -33,6 +33,8 @@ function Profile(){
     const [newAvatar, SetNewAvatar] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newExpertise, setNewExpertise] = useState('');
+    const [newConnections, setNewConnections] = useState('');
+    const [newPostCount, setNewPostCount] = useState('');
     const [gotMediaLimit,setGotMediaLimit] = useState(false);
     const[currUserDetails, setCurrUserDetails] = useState([]);
 
@@ -74,6 +76,9 @@ function Profile(){
             setNewExpertise(currUserDetails.userInfo.expertise);
             SetNewAvatar(currUserDetails.userInfo.avatar);
             setNewId(currUserDetails.userInfo.id);
+            setNewConnections(currUserDetails.userInfo.connections);
+            setNewPostCount(currUserDetails.userInfo.totalPosts);
+
         }
         if(currUserDetails.media && currUserDetails.media.length === 3){
             setGotMediaLimit(true);
@@ -524,11 +529,11 @@ function Profile(){
                 }  
                 <Stack direction="horizontal" className='info-stack' style={{marginTop:"2vw"}}>
                         <Stack className='info-block'> 
-                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
+                            <p style={{margin:'0', fontWeight:'bold'}}>{newPostCount}</p>
                             <p>Posts</p>
                         </Stack>
                         <Stack className='info-block'>
-                            <p style={{margin:'0', fontWeight:'bold'}}>30</p>
+                            <p style={{margin:'0', fontWeight:'bold'}}>{newConnections}</p>
                             <p>Connections</p>
                         </Stack>
                     </Stack>
@@ -675,7 +680,7 @@ function Profile(){
                         return(
                             <ListGroup.Item as="li" className='activity-list-item' onClick={()=>goToSearchedPost(currPost.channel, currPost.id)}>
                                 <div className="fw-bold" style={{color:'#d84434'}}>{currPost.channel}</div>
-                                <p style={{fontSize:'small'}} >showPreview({currPost.data},10)</p>
+                                <p style={{fontSize:'small'}} >{showPreview(currPost.data,10)}</p>
                             </ListGroup.Item>
                         );
                     })}
