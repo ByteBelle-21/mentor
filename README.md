@@ -5,7 +5,7 @@ AskMentor is a web development project where I leverage my computer science skil
 To run the application, please follow following steps :
 
 Docker is required to run this application.
-After cloning the source code, please navigate to mentor directory 
-Run command docker compose build
-Run command docker compose up
-You can access the website on port 3000
+After cloning the source code, please navigate to mentor directory. 
+Run command `docker compose build`.
+Run command `docker compose up`.
+You can access the website on port 3000.
